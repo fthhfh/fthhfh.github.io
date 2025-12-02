@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <!-- 引入SheetJS用于Excel导出 -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- 引入动态用户配置 -->
+    <script src="config.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -166,9 +168,8 @@
                     登录系统
                 </button>
                 
-                <div class="text-center text-gray-500 text-sm pt-4 border-t border-gray-200">
-                    <p>默认账号: <span class="font-medium">admin</span></p>
-                    <p>默认密码: <span class="font-medium">123456</span></p>
+                <div id="login-hint" class="text-center text-gray-500 text-sm pt-4 border-t border-gray-200">
+                    <!-- 动态显示用户列表 -->
                 </div>
             </form>
         </div>
@@ -1295,9 +1296,36 @@
     <script>
         // 登录功能
         document.addEventListener('DOMContentLoaded', function() {
-            // 固定账户密码
-            const FIXED_USERNAME = 'admin';
-            const FIXED_PASSWORD = '123456';
+            // 动态加载用户凭证（从config.js）
+            let userCredentials = null;
+            
+            // 尝试从外部config.js加载配置
+            function loadUserCredentials() {
+                // 如果USER_CREDENTIALS已全局定义（通过config.js引入）
+                if (typeof USER_CREDENTIALS !== 'undefined') {
+                    console.log('从config.js加载用户配置成功');
+                    return USER_CREDENTIALS;
+                }
+                
+                // 如果未找到外部配置，使用默认配置
+                console.warn('未找到外部配置文件，使用默认用户配置');
+                return {
+                    users: [
+                        { username: 'admin', password: '123456' }
+                    ],
+                    validateUser: function(username, password) {
+                        return this.users.some(user => 
+                            user.username === username && user.password === password
+                        );
+                    },
+                    getAllUsers: function() {
+                        return this.users;
+                    }
+                };
+            }
+            
+            // 初始化用户凭证
+            userCredentials = loadUserCredentials();
             
             // 登录表单提交
             const loginForm = document.getElementById('login-form');
@@ -1313,17 +1341,25 @@
                 const password = document.getElementById('password').value.trim();
                 
                 // 验证登录
-                if (username === FIXED_USERNAME && password === FIXED_PASSWORD) {
+                if (userCredentials.validateUser(username, password)) {
                     // 登录成功
                     loggedUserSpan.textContent = username;
                     loginScreen.classList.add('hidden');
                     mainApp.classList.remove('hidden');
+                    
+                    // 保存登录状态（可选）
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('currentUser', username);
                     
                     // 初始化应用
                     initializeApp();
                 } else {
                     // 登录失败
                     loginError.classList.remove('hidden');
+                    loginError.innerHTML = `
+                        <i class="fa fa-exclamation-circle mr-2"></i>
+                        <span>账号或密码错误，请重试</span>
+                    `;
                     document.getElementById('username').focus();
                 }
             });
@@ -1334,6 +1370,10 @@
                 mainApp.classList.add('hidden');
                 loginForm.reset();
                 loginError.classList.add('hidden');
+                
+                // 清除会话数据
+                sessionStorage.removeItem('isLoggedIn');
+                sessionStorage.removeItem('currentUser');
             });
             
             // 回车键提交登录
@@ -1348,6 +1388,42 @@
                     loginForm.dispatchEvent(new Event('submit'));
                 }
             });
+            
+            // 显示默认账号密码提示
+            function updateLoginHint() {
+                const users = userCredentials.getAllUsers ? userCredentials.getAllUsers() : userCredentials.users;
+                const hintDiv = document.getElementById('login-hint');
+                
+                if (users.length > 0 && hintDiv) {
+                    hintDiv.innerHTML = '';
+                    users.forEach(user => {
+                        hintDiv.innerHTML += `<p>账号: <span class="font-medium">${user.username}</span> / 密码: <span class="font-medium">${user.password}</span></p>`;
+                    });
+                }
+            }
+            
+            // 更新登录提示
+            updateLoginHint();
+            
+            // 检查是否有已保存的登录状态（可选）
+            function checkSavedLogin() {
+                const isLoggedIn = sessionStorage.getItem('isLoggedIn');
+                const currentUser = sessionStorage.getItem('currentUser');
+                
+                if (isLoggedIn === 'true' && currentUser) {
+                    // 自动登录（这里需要验证用户名是否有效）
+                    const userExists = userCredentials.users.some(user => user.username === currentUser);
+                    if (userExists) {
+                        loggedUserSpan.textContent = currentUser;
+                        loginScreen.classList.add('hidden');
+                        mainApp.classList.remove('hidden');
+                        initializeApp();
+                    }
+                }
+            }
+            
+            // 检查保存的登录状态
+            checkSavedLogin();
         });
         
         // 应用初始化
