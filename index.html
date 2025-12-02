@@ -1,0 +1,2292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>产品成本计算器 - 登录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- 引入SheetJS用于Excel导出 -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2c3e50',
+                        secondary: '#3498db',
+                        lightgray: '#f5f7fa',
+                        border: '#dce1e8',
+                        text: '#333',
+                        highlight: '#e74c3c',
+                        success: '#2ecc71',
+                        material: '#3498db',
+                        labor: '#9b59b6',
+                        expense: '#f39c12',
+                        outsourcing: '#1abc9c',
+                        test: '#e67e22',
+                        project: '#9b59b6',
+                        tax: '#e74c3c',
+                        auxiliary: '#16a085',
+                        chart1: '#3498db',
+                        chart2: '#9b59b6',
+                        chart3: '#f39c12',
+                        chart4: '#1abc9c',
+                        chart5: '#e74c3c',
+                        chart6: '#e67e22',
+                        chart7: '#2ecc71'
+                    },
+                    fontFamily: {
+                        sans: ['Segoe UI', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            }
+            .hover-lift {
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+            .hover-lift:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+            }
+            .input-focus {
+                @apply focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20;
+            }
+            .fade-in {
+                animation: fadeIn 0.3s ease;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .amount-container {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+            }
+            .cost-breakdown-item {
+                @apply py-2 border-b border-dashed border-gray-200 last:border-0;
+            }
+            .cost-branch-item {
+                font-size: 0.85rem;
+                margin-top: 4px;
+                padding-left: 16px;
+            }
+            .section-divider {
+                @apply my-8 border-t border-gray-200;
+            }
+            .chart-tooltip {
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+            }
+            .chart-legend-item {
+                display: flex;
+                align-items: center;
+                margin-bottom: 6px;
+                font-size: 12px;
+            }
+            .chart-legend-color {
+                width: 12px;
+                height: 12px;
+                margin-right: 6px;
+                border-radius: 2px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-text">
+    <!-- 登录界面 -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100 p-4">
+        <div class="bg-white rounded-2xl card-shadow p-8 w-full max-w-md hover-lift">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-secondary to-primary rounded-full mb-4">
+                    <i class="fa fa-calculator text-white text-2xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-primary mb-2">产品成本计算器</h1>
+                <p class="text-gray-600">请输入账号和密码登录系统</p>
+            </div>
+            
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="username" class="block text-gray-700 font-medium mb-2">账号</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa fa-user text-gray-400"></i>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username"
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg input-focus"
+                            placeholder="请输入账号"
+                            required
+                        >
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-gray-700 font-medium mb-2">密码</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa fa-lock text-gray-400"></i>
+                        </div>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password"
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg input-focus"
+                            placeholder="请输入密码"
+                            required
+                        >
+                    </div>
+                </div>
+                
+                <div id="login-error" class="text-highlight text-sm hidden p-3 bg-red-50 rounded-lg">
+                    <i class="fa fa-exclamation-circle mr-2"></i>
+                    <span>账号或密码错误，请重试</span>
+                </div>
+                
+                <button 
+                    type="submit"
+                    class="w-full bg-gradient-to-r from-secondary to-primary hover:from-secondary/90 hover:to-primary/90 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-secondary/50"
+                >
+                    登录系统
+                </button>
+                
+                <div class="text-center text-gray-500 text-sm pt-4 border-t border-gray-200">
+                    <p>默认账号: <span class="font-medium">admin</span></p>
+                    <p>默认密码: <span class="font-medium">123456</span></p>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 主应用界面（初始隐藏） -->
+    <div id="main-app" class="hidden">
+        <div class="container max-w-7xl mx-auto bg-white rounded-xl card-shadow overflow-hidden my-6">
+            <!-- 顶部导航栏 -->
+            <header class="bg-primary text-white p-5 border-b-4 border-secondary">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-[clamp(1.5rem,3vw,1.8rem)] font-semibold">产品成本计算器</h1>
+                        <p class="text-sm text-gray-300 mt-1">专业成本计算与报价工具</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <p class="text-sm text-gray-300">已登录: <span id="logged-user" class="font-medium">admin</span></p>
+                        </div>
+                        <button 
+                            id="logout-btn"
+                            class="bg-secondary/20 hover:bg-secondary/30 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                        >
+                            <i class="fa fa-sign-out"></i>
+                            <span>退出</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 产品选择区域 -->
+            <div class="product-selector bg-lightgray p-5 border-b border-border">
+                <h2 class="text-primary text-lg md:text-xl font-semibold mb-4">选择产品类型</h2>
+                <div class="radio-group flex flex-wrap gap-6">
+                    <label class="radio-option flex items-center gap-2 cursor-pointer transition-all p-2 px-4 rounded hover:bg-secondary/10">
+                        <input type="radio" name="product" value="solar" checked class="w-4 h-4 accent-secondary">
+                        <span>太阳电池阵</span>
+                    </label>
+                    <label class="radio-option flex items-center gap-2 cursor-pointer transition-all p-2 px-4 rounded hover:bg-secondary/10">
+                        <input type="radio" name="product" value="battery" class="w-4 h-4 accent-secondary">
+                        <span>蓄电池组</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- 太阳电池阵成本计算区域 -->
+            <div id="solar-panel" class="product-section p-5 md:p-6 fade-in">
+                <h2 class="text-primary text-xl md:text-2xl font-semibold mb-6 pb-2 border-b border-border">太阳电池阵成本计算</h2>
+                
+                <!-- 部门参数 -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        部门参与参数
+                    </h3>
+                    
+                    <div class="department-block border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">技术部（设计）</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">参与人数：</label>
+                                <input type="number" step="1" min="1" id="solar-tech-people" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">工作天数：</label>
+                                <input type="number" step="1" min="1" id="solar-tech-days" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">合计耗费设计工时：</label>
+                                <span id="solar-tech-hours" class="calculated-value text-secondary font-semibold block mt-1">8</span>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：人数 × 天数 × 8（每日8小时）</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="department-block border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">生产部</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">参与人数：</label>
+                                <input type="number" step="1" min="1" id="solar-prod-people" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">工作天数：</label>
+                                <input type="number" step="1" min="1" id="solar-prod-days" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">合计耗费生产工时：</label>
+                                <span id="solar-prod-hours" class="calculated-value text-secondary font-semibold block mt-1">8</span>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：人数 × 天数 × 8（每日8小时）</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 试验部参数 -->
+                    <div class="department-block border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">试验部</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">参与人数：</label>
+                                <input type="number" step="1" min="1" id="solar-test-people" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">工作天数：</label>
+                                <input type="number" step="1" min="1" id="solar-test-days" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">合计耗费试验工时：</label>
+                                <span id="solar-test-hours" class="calculated-value text-secondary font-semibold block mt-1">12</span>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：人数 × 天数 × 12（每日12小时）</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">总耗费人力工时：</label>
+                            <span id="solar-total-hours" class="calculated-value text-secondary font-semibold block mt-1">28</span>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：技术部工时 + 生产部工时 + 试验部工时</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">耗费机器工时：</label>
+                            <span id="solar-machine-hours" class="calculated-value text-secondary font-semibold block mt-1">12</span>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：试验部天数 × 12（每日12小时）</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">全月可生产数量：</label>
+                            <span id="solar-monthly-production" class="calculated-value text-secondary font-semibold block mt-1">348.0000000000</span>
+                            <span class="text-gray-500 text-xs">件/月</span>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：2784 / 生产部工时</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 一、材料成本 -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        一、材料成本
+                    </h3>
+                    
+                    <!-- 1. BOM（单位原材料成本） -->
+                    <div class="mb-5">
+                        <h4 class="text-gray-700 font-medium mb-3">1. BOM（单位原材料成本）</h4>
+                        
+                        <div class="bom-tools flex flex-wrap gap-3 mb-4 items-center">
+                            <button class="btn btn-primary bg-secondary hover:bg-secondary/90 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors" id="solar-add-row">
+                                <i class="fa fa-plus"></i> 添加物料行
+                            </button>
+                            <button class="btn btn-success bg-success hover:bg-success/90 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors" id="solar-paste">
+                                <i class="fa fa-clipboard"></i> 从Excel粘贴
+                            </button>
+                            <div class="paste-hint text-gray-500 text-sm italic flex-grow max-w-lg">
+                                提示：Excel中复制7列数据（物料名称、数量、单位、损耗、总数量、单价（元）、总价（元））后点击粘贴
+                            </div>
+                            <div class="paste-status" id="solar-paste-status"></div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="bom-table w-full border-collapse mb-4" id="solar-bom-table">
+                                <thead>
+                                    <tr class="bg-lightgray">
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">序号</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">物料名称</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">数量</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">单位</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">损耗</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">总数量</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">单价（元）</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">总价（元）</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="bom-index p-3 border-b border-border">1</td>
+                                        <td class="p-3 border-b border-border"><input type="text" class="bom-name w-full p-2 border border-gray-300 rounded input-focus"></td>
+                                        <td class="p-3 border-b border-border"><input type="number" step="0.01" class="bom-qty w-full p-2 border border-gray-300 rounded input-focus" value="1"></td>
+                                        <td class="p-3 border-b border-border"><input type="text" class="bom-unit w-full p-2 border border-gray-300 rounded input-focus" value="个"></td>
+                                        <td class="p-3 border-b border-border"><input type="number" step="0.01" class="bom-loss w-full p-2 border border-gray-300 rounded input-focus" value="0"></td>
+                                        <td class="p-3 border-b border-border"><span class="bom-total-qty">1</span></td>
+                                        <td class="p-3 border-b border-border"><input type="number" step="0.01" class="bom-price w-full p-2 border border-gray-300 rounded input-focus"></td>
+                                        <td class="p-3 border-b border-border"><div class="amount-container"><span class="bom-subtotal">0.00</span><span>元</span></div></td>
+                                        <td class="p-3 border-b border-border"><span class="delete-row text-highlight cursor-pointer hover:text-highlight/80 transition-colors">×</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="bom-footer flex flex-wrap justify-between items-center pt-4 border-t border-border">
+                            <div>
+                                <label class="text-gray-700 font-medium">BOM总成本：</label>
+                                <div class="amount-container inline-block ml-2"><span id="solar-bom-total" class="bom-total font-semibold text-material">0.00</span><span>元</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 2. 试验材料 -->
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">2. 试验材料成本：</label>
+                            <input type="number" step="0.01" id="solar-material-test" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 二、人力成本明细 -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        二、人力成本明细
+                    </h3>
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">1. 产品生产成本：</label>
+                            <div class="amount-container mt-1"><span id="solar-production-cost" class="calculated-value text-labor font-semibold">369.84</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：生产部门工时 × 46.24</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">2. 产品设计成本：</label>
+                            <div class="amount-container mt-1"><span id="solar-design-cost" class="calculated-value text-labor font-semibold">746.80</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：设计总工时 × 93.35</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">3. 试验人力成本：</label>
+                            <div class="amount-container mt-1"><span id="solar-test-labor-cost" class="calculated-value text-test font-semibold">495.84</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：试验工时 × 41.32</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">4. 辅助人员成本：</label>
+                            <div class="amount-container mt-1"><span id="solar-auxiliary-cost" class="calculated-value text-auxiliary font-semibold">240.846</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：83818.52412 / 全月可生产数量</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 三、制造费用分摊明细 -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        三、制造费用分摊明细
+                    </h3>
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">1. 生产制造费分摊：</label>
+                            <div class="amount-container mt-1"><span id="solar-manufacturing-expense" class="calculated-value text-expense font-semibold">857.84</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：生产总工时 × 107.23</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">2. 设计相关分摊制造费：</label>
+                            <div class="amount-container mt-1"><span id="solar-design-expense" class="calculated-value text-expense font-semibold">782.24</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：设计总工时 × 97.78</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">3. 试验制造分摊：</label>
+                            <div class="amount-container mt-1"><span id="solar-test-expense" class="calculated-value text-test font-semibold">1288.20</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：耗费机器工时 × 107.35</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 四、外购成本 -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        四、外购
+                    </h3>
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">1. 外配、成套设备成本：</label>
+                            <input type="number" step="0.01" id="solar-outsourcing-equipment" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">2. 安装材料成本：</label>
+                            <input type="number" step="0.01" id="solar-outsourcing-materials" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">3. 安装人工成本：</label>
+                            <input type="number" step="0.01" id="solar-outsourcing-labor" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">4. 其他：</label>
+                            <input type="number" step="0.01" id="solar-outsourcing-other" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div class="form-group md:col-span-2">
+                            <label class="text-gray-600 text-sm font-medium">外购总成本：</label>
+                            <div class="amount-container mt-1"><span id="solar-outsourcing-total" class="calculated-value text-outsourcing font-semibold">0.00</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：外配、成套设备成本 + 安装材料成本 + 安装人工成本 + 其他</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 五、项目执行费用（预算） -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        五、项目执行费用（预算）
+                    </h3>
+                    
+                    <!-- A类：差旅费、邮寄费 -->
+                    <div class="project-category border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">A类：差旅费、邮寄费</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">差旅费：</label>
+                                <input type="number" step="0.01" id="solar-project-a-travel" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">邮寄费：</label>
+                                <input type="number" step="0.01" id="solar-project-a-mail" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group md:col-span-2">
+                                <label class="text-gray-600 text-sm font-medium">A类费用合计：</label>
+                                <div class="amount-container mt-1"><span id="solar-project-a-total" class="calculated-value text-project font-semibold">0.00</span><span>元</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- B类：项目咨询费、合同代理费、标书费、中标服务费 -->
+                    <div class="project-category border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">B类：项目咨询费、合同代理费、标书费、中标服务费</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">项目咨询费：</label>
+                                <input type="number" step="0.01" id="solar-project-b-consult" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">合同代理费：</label>
+                                <input type="number" step="0.01" id="solar-project-b-agent" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">标书费：</label>
+                                <input type="number" step="0.01" id="solar-project-b-bid" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">中标服务费：</label>
+                                <input type="number" step="0.01" id="solar-project-b-win" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group md:col-span-4">
+                                <label class="text-gray-600 text-sm font-medium">B类费用合计：</label>
+                                <div class="amount-container mt-1"><span id="solar-project-b-total" class="calculated-value text-project font-semibold">0.00</span><span>元</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- C类：项目审计费 -->
+                    <div class="project-category border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">C类：项目审计费</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="form-group md:col-span-3">
+                                <label class="text-gray-600 text-sm font-medium">项目审计费：</label>
+                                <input type="number" step="0.01" id="solar-project-c-audit" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">C类费用合计：</label>
+                                <div class="amount-container mt-1"><span id="solar-project-c-total" class="calculated-value text-project font-semibold">0.00</span><span>元</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 其他：费用分摊 -->
+                    <div class="project-category border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">其他：费用分摊</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">管理费：</label>
+                                <input type="number" step="0.01" id="solar-project-other-mgmt" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">销售费：</label>
+                                <input type="number" step="0.01" id="solar-project-other-sales" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">研发费：</label>
+                                <input type="number" step="0.01" id="solar-project-other-rd" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">财务费：</label>
+                                <input type="number" step="0.01" id="solar-project-other-finance" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group md:col-span-4">
+                                <label class="text-gray-600 text-sm font-medium">其他费用合计：</label>
+                                <div class="amount-container mt-1"><span id="solar-project-other-total" class="calculated-value text-project font-semibold">0.00</span><span>元</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 项目执行费用总计 -->
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-border">
+                        <div class="form-group md:col-span-4">
+                            <label class="text-gray-700 font-medium text-base">项目执行费用总计：</label>
+                            <div class="amount-container mt-1"><span id="solar-project-total" class="calculated-value text-project font-semibold text-lg">0.00</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：A类合计 + B类合计 + C类合计 + 其他费用合计</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 六、税金合计 -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        六、税金合计
+                    </h3>
+                    
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- 增值税 -->
+                        <div class="tax-item border border-border rounded-md p-4">
+                            <h4 class="text-primary font-medium mb-3">1. 增值税</h4>
+                            <div class="form-group mb-2">
+                                <label class="text-gray-600 text-sm font-medium">计算公式：</label>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    增值税 = (报价金额 / 1.13 × 13%) - (BOM成本 + 生产制造费分摊) × 13%
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">增值税金额：</label>
+                                <div class="amount-container mt-1"><span id="solar-tax-vat" class="calculated-value text-tax font-semibold">0.00</span><span>元</span></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 附加税 -->
+                        <div class="tax-item border border-border rounded-md p-4">
+                            <h4 class="text-primary font-medium mb-3">2. 附加税</h4>
+                            <div class="form-group mb-2">
+                                <label class="text-gray-600 text-sm font-medium">计算公式：</label>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    附加税 = 增值税 × 7% + 增值税 × 5% + 报价金额 × 0.03%
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">附加税金额：</label>
+                                <div class="amount-container mt-1"><span id="solar-tax-surcharge" class="calculated-value text-tax font-semibold">0.00</span><span>元</span></div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：增值税 × 7% + 增值税 × 5% + 报价金额 × 0.03%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 税金总计 -->
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-border">
+                        <div class="form-group md:col-span-4">
+                            <label class="text-gray-700 font-medium text-base">税金总计：</label>
+                            <div class="amount-container mt-1"><span id="solar-tax-total" class="calculated-value text-tax font-semibold text-lg">0.00</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：增值税 + 附加税</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 新增：操作按钮区域 -->
+                <div class="button-area bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        操作与导出
+                    </h3>
+                    <div class="flex flex-wrap gap-4">
+                        <button id="solar-calculate-btn" class="bg-secondary hover:bg-secondary/90 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all font-medium">
+                            <i class="fa fa-calculator"></i>
+                            <span>计算成本与报价</span>
+                        </button>
+                        <button id="solar-export-btn" class="bg-success hover:bg-success/90 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all font-medium">
+                            <i class="fa fa-download"></i>
+                            <span>一键导出Excel</span>
+                        </button>
+                        <div class="export-status ml-2" id="solar-export-status"></div>
+                    </div>
+                </div>
+                
+                <!-- 成本分析与总成本、报价金额 -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- 成本分析图表（更新包含项目费用） -->
+                    <div class="lg:col-span-1 bg-white border border-border rounded-lg p-5 hover-lift">
+                        <h3 class="text-secondary font-semibold text-lg mb-4">成本构成分析</h3>
+                        <div class="chart-controls mb-4 flex gap-2">
+                            <button class="chart-type-btn active px-3 py-1 bg-secondary text-white rounded text-sm" data-type="pie">饼图</button>
+                            <button class="chart-type-btn px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm" data-type="doughnut">环形图</button>
+                            <button class="chart-type-btn px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm" data-type="bar">柱状图</button>
+                        </div>
+                        <div class="chart-container" style="position: relative; height: 280px;">
+                            <canvas id="solar-cost-chart"></canvas>
+                        </div>
+                        <div class="chart-legend mt-4 text-sm" id="solar-chart-legend"></div>
+                    </div>
+                    
+                    <!-- 总成本与报价金额计算 -->
+                    <div class="lg:col-span-2 bg-white border border-border rounded-lg p-5 hover-lift">
+                        <h3 class="text-secondary font-semibold text-lg mb-4">总成本与报价金额计算</h3>
+                        <div class="cost-breakdown">
+                            <div class="cost-breakdown-item flex justify-between">
+                                <span>材料总成本</span>
+                                <div class="amount-container"><span id="solar-material-total" class="text-material font-medium">0.00</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>BOM成本</span>
+                                <div class="amount-container"><span id="solar-bom-total-branch">0.00</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>试验材料成本</span>
+                                <div class="amount-container"><span id="solar-test-total-branch">0.00</span><span>元</span></div>
+                            </div>
+                            
+                            <div class="cost-breakdown-item flex justify-between">
+                                <span>人力总成本</span>
+                                <div class="amount-container"><span id="solar-labor-total" class="text-labor font-medium">1853.326</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>产品生产成本</span>
+                                <div class="amount-container"><span id="solar-production-branch">369.84</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>产品设计成本</span>
+                                <div class="amount-container"><span id="solar-design-branch">746.80</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>试验人力成本</span>
+                                <div class="amount-container"><span id="solar-test-labor-branch">495.84</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>辅助人员成本</span>
+                                <div class="amount-container"><span id="solar-auxiliary-branch">240.846</span><span>元</span></div>
+                            </div>
+                            
+                            <div class="cost-breakdown-item flex justify-between">
+                                <span>制造费用分摊总额</span>
+                                <div class="amount-container"><span id="solar-expense-total" class="text-expense font-medium">2928.28</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>生产制造费分摊</span>
+                                <div class="amount-container"><span id="solar-manufacturing-branch">857.84</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>设计相关分摊制造费</span>
+                                <div class="amount-container"><span id="solar-design-expense-branch">782.24</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>试验制造分摊</span>
+                                <div class="amount-container"><span id="solar-test-expense-branch">1288.20</span><span>元</span></div>
+                            </div>
+                            
+                            <div class="cost-breakdown-item flex justify-between">
+                                <span>外购总成本</span>
+                                <div class="amount-container"><span id="solar-outsourcing-total-branch" class="text-outsourcing font-medium">0.00</span><span>元</span></div>
+                            </div>
+                            
+                            <div class="cost-breakdown-item flex justify-between">
+                                <span>项目执行费用总计</span>
+                                <div class="amount-container"><span id="solar-project-total-branch" class="text-project font-medium">0.00</span><span>元</span></div>
+                            </div>
+                            
+                            <div class="cost-breakdown-item flex justify-between pt-3 border-t border-gray-300 mt-2">
+                                <span class="font-bold">产品总成本（不含税）</span>
+                                <div class="amount-container"><span id="solar-total-cost" class="font-bold text-primary text-xl">4781.606</span><span>元</span></div>
+                            </div>
+                            
+                            <!-- 税金总计明细 -->
+                            <div class="cost-breakdown-item flex justify-between pt-2">
+                                <span class="font-bold text-tax">税金总计</span>
+                                <div class="amount-container"><span id="solar-tax-total-branch" class="font-bold text-tax text-xl">0.00</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>增值税</span>
+                                <div class="amount-container"><span id="solar-tax-vat-branch">0.00</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>附加税</span>
+                                <div class="amount-container"><span id="solar-tax-surcharge-branch">0.00</span><span>元</span></div>
+                            </div>
+                            
+                            <!-- 报价金额 -->
+                            <div class="cost-breakdown-item flex justify-between pt-4 border-t-2 border-primary mt-3">
+                                <span class="font-bold text-xl text-secondary">报价金额（含税）</span>
+                                <div class="amount-container">
+                                    <span id="solar-quote-amount" class="font-bold text-secondary text-2xl">0.00</span>
+                                    <span>元</span>
+                                </div>
+                            </div>
+                            <div class="formula-hint text-gray-500 text-sm italic mt-2">
+                                报价金额计算公式：(产品总成本 × 0.13 × 0.12) + (产品总成本 × 1.13)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 蓄电池组成本计算区域 -->
+            <div id="battery-pack" class="product-section p-5 md:p-6 hidden">
+                <h2 class="text-primary text-xl md:text-2xl font-semibold mb-6 pb-2 border-b border-border">蓄电池组成本计算</h2>
+                
+                <!-- 部门参数 -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        部门参与参数
+                    </h3>
+                    
+                    <div class="department-block border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">技术部（设计）</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">参与人数：</label>
+                                <input type="number" step="1" min="1" id="battery-tech-people" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">工作天数：</label>
+                                <input type="number" step="1" min="1" id="battery-tech-days" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">合计耗费设计工时：</label>
+                                <span id="battery-tech-hours" class="calculated-value text-secondary font-semibold block mt-1">8</span>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：人数 × 天数 × 8（每日8小时）</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="department-block border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">生产部</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">参与人数：</label>
+                                <input type="number" step="1" min="1" id="battery-prod-people" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">工作天数：</label>
+                                <input type="number" step="1" min="1" id="battery-prod-days" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">合计耗费生产工时：</label>
+                                <span id="battery-prod-hours" class="calculated-value text-secondary font-semibold block mt-1">8</span>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：人数 × 天数 × 8（每日8小时）</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 试验部参数 -->
+                    <div class="department-block border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">试验部</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">参与人数：</label>
+                                <input type="number" step="1" min="1" id="battery-test-people" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">工作天数：</label>
+                                <input type="number" step="1" min="1" id="battery-test-days" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">合计耗费试验工时：</label>
+                                <span id="battery-test-hours" class="calculated-value text-secondary font-semibold block mt-1">12</span>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：人数 × 天数 × 12（每日12小时）</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">总耗费人力工时：</label>
+                            <span id="battery-total-hours" class="calculated-value text-secondary font-semibold block mt-1">28</span>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：技术部工时 + 生产部工时 + 试验部工时</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">耗费机器工时：</label>
+                            <span id="battery-machine-hours" class="calculated-value text-secondary font-semibold block mt-1">12</span>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：试验部天数 × 12（每日12小时）</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">全月可生产数量：</label>
+                            <span id="battery-monthly-production" class="calculated-value text-secondary font-semibold block mt-1">348.0000000000</span>
+                            <span class="text-gray-500 text-xs">件/月</span>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：2784 / 生产部工时</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 一、材料成本 -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        一、材料成本
+                    </h3>
+                    
+                    <!-- 1. BOM（单位原材料成本） -->
+                    <div class="mb-5">
+                        <h4 class="text-gray-700 font-medium mb-3">1. BOM（单位原材料成本）</h4>
+                        
+                        <div class="bom-tools flex flex-wrap gap-3 mb-4 items-center">
+                            <button class="btn btn-primary bg-secondary hover:bg-secondary/90 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors" id="battery-add-row">
+                                <i class="fa fa-plus"></i> 添加物料行
+                            </button>
+                            <button class="btn btn-success bg-success hover:bg-success/90 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors" id="battery-paste">
+                                <i class="fa fa-clipboard"></i> 从Excel粘贴
+                            </button>
+                            <div class="paste-hint text-gray-500 text-sm italic flex-grow max-w-lg">
+                                提示：Excel中复制9列数据（序号、分类、项目、分项、型号或说明、数量、单位、单价、总价）后点击粘贴
+                            </div>
+                            <div class="paste-status" id="battery-paste-status"></div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="bom-table w-full border-collapse mb-4" id="battery-bom-table">
+                                <thead>
+                                    <tr class="bg-lightgray">
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">序号</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">分类</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">项目</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">分项</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">型号或说明</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">数量</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">单位</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">单价（元）</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">总价（元）</th>
+                                        <th class="p-3 text-left border-b border-border text-primary font-medium">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="bom-index p-3 border-b border-border">1</td>
+                                        <td class="p-3 border-b border-border"><input type="text" class="bom-category w-full p-2 border border-gray-300 rounded input-focus"></td>
+                                        <td class="p-3 border-b border-border"><input type="text" class="bom-item w-full p-2 border border-gray-300 rounded input-focus"></td>
+                                        <td class="p-3 border-b border-border"><input type="text" class="bom-subitem w-full p-2 border border-gray-300 rounded input-focus"></td>
+                                        <td class="p-3 border-b border-border"><input type="text" class="bom-description w-full p-2 border border-gray-300 rounded input-focus"></td>
+                                        <td class="p-3 border-b border-border"><input type="number" step="0.01" class="bom-qty w-full p-2 border border-gray-300 rounded input-focus" value="1"></td>
+                                        <td class="p-3 border-b border-border"><input type="text" class="bom-unit w-full p-2 border border-gray-300 rounded input-focus" value="个"></td>
+                                        <td class="p-3 border-b border-border"><input type="number" step="0.01" class="bom-price w-full p-2 border border-gray-300 rounded input-focus"></td>
+                                        <td class="p-3 border-b border-border"><div class="amount-container"><span class="bom-subtotal">0.00</span><span>元</span></div></td>
+                                        <td class="p-3 border-b border-border"><span class="delete-row text-highlight cursor-pointer hover:text-highlight/80 transition-colors">×</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="bom-footer flex flex-wrap justify-between items-center pt-4 border-t border-border">
+                            <div>
+                                <label class="text-gray-700 font-medium">BOM总成本：</label>
+                                <div class="amount-container inline-block ml-2"><span id="battery-bom-total" class="bom-total font-semibold text-material">0.00</span><span>元</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 2. 试验材料 -->
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">2. 试验材料成本：</label>
+                            <input type="number" step="0.01" id="battery-material-test" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 二、人力成本明细 -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        二、人力成本明细
+                    </h3>
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">1. 产品生产成本：</label>
+                            <div class="amount-container mt-1"><span id="battery-production-cost" class="calculated-value text-labor font-semibold">369.84</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：生产部门工时 × 46.24</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">2. 产品设计成本：</label>
+                            <div class="amount-container mt-1"><span id="battery-design-cost" class="calculated-value text-labor font-semibold">746.80</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：设计总工时 × 93.35</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">3. 试验人力成本：</label>
+                            <div class="amount-container mt-1"><span id="battery-test-labor-cost" class="calculated-value text-test font-semibold">495.84</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：试验工时 × 41.32</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">4. 辅助人员成本：</label>
+                            <div class="amount-container mt-1"><span id="battery-auxiliary-cost" class="calculated-value text-auxiliary font-semibold">240.846</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：83818.52412 / 全月可生产数量</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 三、制造费用分摊明细 -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        三、制造费用分摊明细
+                    </h3>
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">1. 生产制造费分摊：</label>
+                            <div class="amount-container mt-1"><span id="battery-manufacturing-expense" class="calculated-value text-expense font-semibold">857.84</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：生产总工时 × 107.23</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">2. 设计相关分摊制造费：</label>
+                            <div class="amount-container mt-1"><span id="battery-design-expense" class="calculated-value text-expense font-semibold">782.24</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：设计总工时 × 97.78</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">3. 试验制造分摊：</label>
+                            <div class="amount-container mt-1"><span id="battery-test-expense" class="calculated-value text-test font-semibold">1288.20</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：耗费机器工时 × 107.35</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 四、外购成本（蓄电池组） -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        四、外购
+                    </h3>
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">1. 外配、成套设备成本：</label>
+                            <input type="number" step="0.01" id="battery-outsourcing-equipment" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">2. 安装材料成本：</label>
+                            <input type="number" step="0.01" id="battery-outsourcing-materials" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">3. 安装人工成本：</label>
+                            <input type="number" step="0.01" id="battery-outsourcing-labor" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div class="form-group">
+                            <label class="text-gray-600 text-sm font-medium">4. 其他：</label>
+                            <input type="number" step="0.01" id="battery-outsourcing-other" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus">
+                        </div>
+                        <div class="form-group md:col-span-2">
+                            <label class="text-gray-600 text-sm font-medium">外购总成本：</label>
+                            <div class="amount-container mt-1"><span id="battery-outsourcing-total" class="calculated-value text-outsourcing font-semibold">0.00</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：外配、成套设备成本 + 安装材料成本 + 安装人工成本 + 其他</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 五、项目执行费用（预算）- 蓄电池组 -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        五、项目执行费用（预算）
+                    </h3>
+                    
+                    <!-- A类：差旅费、邮寄费 -->
+                    <div class="project-category border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">A类：差旅费、邮寄费</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">差旅费：</label>
+                                <input type="number" step="0.01" id="battery-project-a-travel" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">邮寄费：</label>
+                                <input type="number" step="0.01" id="battery-project-a-mail" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group md:col-span-2">
+                                <label class="text-gray-600 text-sm font-medium">A类费用合计：</label>
+                                <div class="amount-container mt-1"><span id="battery-project-a-total" class="calculated-value text-project font-semibold">0.00</span><span>元</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- B类：项目咨询费、合同代理费、标书费、中标服务费 -->
+                    <div class="project-category border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">B类：项目咨询费、合同代理费、标书费、中标服务费</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">项目咨询费：</label>
+                                <input type="number" step="0.01" id="battery-project-b-consult" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">合同代理费：</label>
+                                <input type="number" step="0.01" id="battery-project-b-agent" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">标书费：</label>
+                                <input type="number" step="0.01" id="battery-project-b-bid" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">中标服务费：</label>
+                                <input type="number" step="0.01" id="battery-project-b-win" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group md:col-span-4">
+                                <label class="text-gray-600 text-sm font-medium">B类费用合计：</label>
+                                <div class="amount-container mt-1"><span id="battery-project-b-total" class="calculated-value text-project font-semibold">0.00</span><span>元</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- C类：项目审计费 -->
+                    <div class="project-category border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">C类：项目审计费</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="form-group md:col-span-3">
+                                <label class="text-gray-600 text-sm font-medium">项目审计费：</label>
+                                <input type="number" step="0.01" id="battery-project-c-audit" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">C类费用合计：</label>
+                                <div class="amount-container mt-1"><span id="battery-project-c-total" class="calculated-value text-project font-semibold">0.00</span><span>元</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 其他：费用分摊 -->
+                    <div class="project-category border border-border rounded-md p-4 mb-4">
+                        <h4 class="text-primary font-medium mb-3">其他：费用分摊</h4>
+                        <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">管理费：</label>
+                                <input type="number" step="0.01" id="battery-project-other-mgmt" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">销售费：</label>
+                                <input type="number" step="0.01" id="battery-project-other-sales" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">研发费：</label>
+                                <input type="number" step="0.01" id="battery-project-other-rd" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">财务费：</label>
+                                <input type="number" step="0.01" id="battery-project-other-finance" class="cost-input mt-1 p-2 border border-gray-300 rounded input-focus" value="0">
+                            </div>
+                            <div class="form-group md:col-span-4">
+                                <label class="text-gray-600 text-sm font-medium">其他费用合计：</label>
+                                <div class="amount-container mt-1"><span id="battery-project-other-total" class="calculated-value text-project font-semibold">0.00</span><span>元</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 项目执行费用总计 -->
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-border">
+                        <div class="form-group md:col-span-4">
+                            <label class="text-gray-700 font-medium text-base">项目执行费用总计：</label>
+                            <div class="amount-container mt-1"><span id="battery-project-total" class="calculated-value text-project font-semibold text-lg">0.00</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：A类合计 + B类合计 + C类合计 + 其他费用合计</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 六、税金合计 - 蓄电池组 -->
+                <div class="cost-block bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        六、税金合计
+                    </h3>
+                    
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- 增值税 -->
+                        <div class="tax-item border border-border rounded-md p-4">
+                            <h4 class="text-primary font-medium mb-3">1. 增值税</h4>
+                            <div class="form-group mb-2">
+                                <label class="text-gray-600 text-sm font-medium">计算公式：</label>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    增值税 = (报价金额 / 1.13 × 13%) - (BOM成本 + 生产制造费分摊) × 13%
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">增值税金额：</label>
+                                <div class="amount-container mt-1"><span id="battery-tax-vat" class="calculated-value text-tax font-semibold">0.00</span><span>元</span></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 附加税 -->
+                        <div class="tax-item border border-border rounded-md p-4">
+                            <h4 class="text-primary font-medium mb-3">2. 附加税</h4>
+                            <div class="form-group mb-2">
+                                <label class="text-gray-600 text-sm font-medium">计算公式：</label>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    附加税 = 增值税 × 7% + 增值税 × 5% + 报价金额 × 0.03%
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="text-gray-600 text-sm font-medium">附加税金额：</label>
+                                <div class="amount-container mt-1"><span id="battery-tax-surcharge" class="calculated-value text-tax font-semibold">0.00</span><span>元</span></div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：增值税 × 7% + 增值税 × 5% + 报价金额 × 0.03%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 税金总计 -->
+                    <div class="form-grid grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-border">
+                        <div class="form-group md:col-span-4">
+                            <label class="text-gray-700 font-medium text-base">税金总计：</label>
+                            <div class="amount-container mt-1"><span id="battery-tax-total" class="calculated-value text-tax font-semibold text-lg">0.00</span><span>元</span></div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：增值税 + 附加税</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 新增：操作按钮区域 -->
+                <div class="button-area bg-white border border-border rounded-lg p-5 mb-6 hover-lift">
+                    <h3 class="text-secondary font-semibold text-lg mb-5 flex items-center">
+                        <span class="w-1.5 h-6 bg-secondary rounded-full mr-3"></span>
+                        操作与导出
+                    </h3>
+                    <div class="flex flex-wrap gap-4">
+                        <button id="battery-calculate-btn" class="bg-secondary hover:bg-secondary/90 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all font-medium">
+                            <i class="fa fa-calculator"></i>
+                            <span>计算成本与报价</span>
+                        </button>
+                        <button id="battery-export-btn" class="bg-success hover:bg-success/90 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all font-medium">
+                            <i class="fa fa-download"></i>
+                            <span>一键导出Excel</span>
+                        </button>
+                        <div class="export-status ml-2" id="battery-export-status"></div>
+                    </div>
+                </div>
+                
+                <!-- 成本分析与总成本、报价金额 -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- 成本分析图表（更新包含项目费用） -->
+                    <div class="lg:col-span-1 bg-white border border-border rounded-lg p-5 hover-lift">
+                        <h3 class="text-secondary font-semibold text-lg mb-4">成本构成分析</h3>
+                        <div class="chart-controls mb-4 flex gap-2">
+                            <button class="chart-type-btn active px-3 py-1 bg-secondary text-white rounded text-sm" data-type="pie">饼图</button>
+                            <button class="chart-type-btn px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm" data-type="doughnut">环形图</button>
+                            <button class="chart-type-btn px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm" data-type="bar">柱状图</button>
+                        </div>
+                        <div class="chart-container" style="position: relative; height: 280px;">
+                            <canvas id="battery-cost-chart"></canvas>
+                        </div>
+                        <div class="chart-legend mt-4 text-sm" id="battery-chart-legend"></div>
+                    </div>
+                    
+                    <!-- 总成本与报价金额计算 -->
+                    <div class="lg:col-span-2 bg-white border border-border rounded-lg p-5 hover-lift">
+                        <h3 class="text-secondary font-semibold text-lg mb-4">总成本与报价金额计算</h3>
+                        <div class="cost-breakdown">
+                            <div class="cost-breakdown-item flex justify-between">
+                                <span>材料总成本</span>
+                                <div class="amount-container"><span id="battery-material-total" class="text-material font-medium">0.00</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>BOM成本</span>
+                                <div class="amount-container"><span id="battery-bom-total-branch">0.00</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>试验材料成本</span>
+                                <div class="amount-container"><span id="battery-test-total-branch">0.00</span><span>元</span></div>
+                            </div>
+                            
+                            <div class="cost-breakdown-item flex justify-between">
+                                <span>人力总成本</span>
+                                <div class="amount-container"><span id="battery-labor-total" class="text-labor font-medium">1853.326</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>产品生产成本</span>
+                                <div class="amount-container"><span id="battery-production-branch">369.84</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>产品设计成本</span>
+                                <div class="amount-container"><span id="battery-design-branch">746.80</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>试验人力成本</span>
+                                <div class="amount-container"><span id="battery-test-labor-branch">495.84</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>辅助人员成本</span>
+                                <div class="amount-container"><span id="battery-auxiliary-branch">240.846</span><span>元</span></div>
+                            </div>
+                            
+                            <div class="cost-breakdown-item flex justify-between">
+                                <span>制造费用分摊总额</span>
+                                <div class="amount-container"><span id="battery-expense-total" class="text-expense font-medium">2928.28</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>生产制造费分摊</span>
+                                <div class="amount-container"><span id="battery-manufacturing-branch">857.84</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>设计相关分摊制造费</span>
+                                <div class="amount-container"><span id="battery-design-expense-branch">782.24</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>试验制造分摊</span>
+                                <div class="amount-container"><span id="battery-test-expense-branch">1288.20</span><span>元</span></div>
+                            </div>
+                            
+                            <div class="cost-breakdown-item flex justify-between">
+                                <span>外购总成本</span>
+                                <div class="amount-container"><span id="battery-outsourcing-total-branch" class="text-outsourcing font-medium">0.00</span><span>元</span></div>
+                            </div>
+                            
+                            <div class="cost-breakdown-item flex justify-between">
+                                <span>项目执行费用总计</span>
+                                <div class="amount-container"><span id="battery-project-total-branch" class="text-project font-medium">0.00</span><span>元</span></div>
+                            </div>
+                            
+                            <div class="cost-breakdown-item flex justify-between pt-3 border-t border-gray-300 mt-2">
+                                <span class="font-bold">产品总成本（不含税）</span>
+                                <div class="amount-container"><span id="battery-total-cost" class="font-bold text-primary text-xl">4781.606</span><span>元</span></div>
+                            </div>
+                            
+                            <!-- 税金总计明细 -->
+                            <div class="cost-breakdown-item flex justify-between pt-2">
+                                <span class="font-bold text-tax">税金总计</span>
+                                <div class="amount-container"><span id="battery-tax-total-branch" class="font-bold text-tax text-xl">0.00</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>增值税</span>
+                                <div class="amount-container"><span id="battery-tax-vat-branch">0.00</span><span>元</span></div>
+                            </div>
+                            <div class="cost-branch-item flex justify-between text-gray-600">
+                                <span>附加税</span>
+                                <div class="amount-container"><span id="battery-tax-surcharge-branch">0.00</span><span>元</span></div>
+                            </div>
+                            
+                            <!-- 报价金额 -->
+                            <div class="cost-breakdown-item flex justify-between pt-4 border-t-2 border-primary mt-3">
+                                <span class="font-bold text-xl text-secondary">报价金额（含税）</span>
+                                <div class="amount-container">
+                                    <span id="battery-quote-amount" class="font-bold text-secondary text-2xl">0.00</span>
+                                    <span>元</span>
+                                </div>
+                            </div>
+                            <div class="formula-hint text-gray-500 text-sm italic mt-2">
+                                报价金额计算公式：(产品总成本 × 0.13 × 0.12) + (产品总成本 × 1.13)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 登录功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 固定账户密码
+            const FIXED_USERNAME = 'admin';
+            const FIXED_PASSWORD = '123456';
+            
+            // 登录表单提交
+            const loginForm = document.getElementById('login-form');
+            const loginScreen = document.getElementById('login-screen');
+            const mainApp = document.getElementById('main-app');
+            const loginError = document.getElementById('login-error');
+            const loggedUserSpan = document.getElementById('logged-user');
+            
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value.trim();
+                
+                // 验证登录
+                if (username === FIXED_USERNAME && password === FIXED_PASSWORD) {
+                    // 登录成功
+                    loggedUserSpan.textContent = username;
+                    loginScreen.classList.add('hidden');
+                    mainApp.classList.remove('hidden');
+                    
+                    // 初始化应用
+                    initializeApp();
+                } else {
+                    // 登录失败
+                    loginError.classList.remove('hidden');
+                    document.getElementById('username').focus();
+                }
+            });
+            
+            // 退出登录
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                loginScreen.classList.remove('hidden');
+                mainApp.classList.add('hidden');
+                loginForm.reset();
+                loginError.classList.add('hidden');
+            });
+            
+            // 回车键提交登录
+            document.getElementById('username').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('password').focus();
+                }
+            });
+            
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        });
+        
+        // 应用初始化
+        function initializeApp() {
+            // 产品类型切换
+            const productRadios = document.querySelectorAll('input[name="product"]');
+            const productSections = document.querySelectorAll('.product-section');
+            
+            productRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const selectedValue = this.value;
+                    
+                    productSections.forEach(section => {
+                        section.classList.add('hidden');
+                    });
+                    
+                    document.getElementById(selectedValue === 'solar' ? 'solar-panel' : 'battery-pack').classList.remove('hidden');
+                });
+            });
+            
+            // 初始化BOM表格
+            initBomTable('solar');
+            initBomTable('battery');
+            
+            // 初始化图表
+            initCharts();
+            
+            // 绑定计算按钮事件
+            document.getElementById('solar-calculate-btn').addEventListener('click', function() {
+                calculateAllCosts('solar');
+            });
+            
+            document.getElementById('battery-calculate-btn').addEventListener('click', function() {
+                calculateAllCosts('battery');
+            });
+            
+            // 绑定导出按钮事件
+            document.getElementById('solar-export-btn').addEventListener('click', function() {
+                exportToExcel('solar');
+            });
+            
+            document.getElementById('battery-export-btn').addEventListener('click', function() {
+                exportToExcel('battery');
+            });
+            
+            // 绑定部门参数变化事件
+            bindDepartmentEvents();
+            
+            // 绑定BOM表格事件
+            bindBomEvents('solar');
+            bindBomEvents('battery');
+            
+            // 绑定外购成本变化事件
+            bindOutsourcingEvents('solar');
+            bindOutsourcingEvents('battery');
+            
+            // 绑定项目费用变化事件
+            bindProjectEvents('solar');
+            bindProjectEvents('battery');
+            
+            // 绑定材料成本变化事件
+            bindMaterialEvents('solar');
+            bindMaterialEvents('battery');
+            
+            // 绑定图表类型切换事件
+            bindChartTypeEvents();
+            
+            // 初始计算
+            calculateAllCosts('solar');
+            calculateAllCosts('battery');
+        }
+        
+        // 初始化BOM表格
+        function initBomTable(productType) {
+            const table = document.getElementById(`${productType}-bom-table`);
+            const addRowBtn = document.getElementById(`${productType}-add-row`);
+            const pasteBtn = document.getElementById(`${productType}-paste`);
+            
+            // 添加行
+            addRowBtn.addEventListener('click', function() {
+                addBomRow(table, productType);
+                updateBomCalculations(productType);
+            });
+            
+            // 粘贴功能
+            pasteBtn.addEventListener('click', function() {
+                pasteFromExcel(table, productType);
+            });
+            
+            // 初始添加一行（如果还没有行）
+            if (table.querySelectorAll('tbody tr').length === 0) {
+                addBomRow(table, productType);
+            }
+        }
+        
+        // 添加BOM行
+        function addBomRow(table, productType) {
+            const tbody = table.querySelector('tbody');
+            const rowCount = tbody.querySelectorAll('tr').length;
+            const newRow = document.createElement('tr');
+            
+            if (productType === 'solar') {
+                // 太阳电池阵BOM表格结构
+                newRow.innerHTML = `
+                    <td class="bom-index p-3 border-b border-border">${rowCount + 1}</td>
+                    <td class="p-3 border-b border-border"><input type="text" class="bom-name w-full p-2 border border-gray-300 rounded input-focus"></td>
+                    <td class="p-3 border-b border-border"><input type="number" step="0.01" class="bom-qty w-full p-2 border border-gray-300 rounded input-focus" value="1"></td>
+                    <td class="p-3 border-b border-border"><input type="text" class="bom-unit w-full p-2 border border-gray-300 rounded input-focus" value="个"></td>
+                    <td class="p-3 border-b border-border"><input type="number" step="0.01" class="bom-loss w-full p-2 border border-gray-300 rounded input-focus" value="0"></td>
+                    <td class="p-3 border-b border-border"><span class="bom-total-qty">1</span></td>
+                    <td class="p-3 border-b border-border"><input type="number" step="0.01" class="bom-price w-full p-2 border border-gray-300 rounded input-focus"></td>
+                    <td class="p-3 border-b border-border"><div class="amount-container"><span class="bom-subtotal">0.00</span><span>元</span></div></td>
+                    <td class="p-3 border-b border-border"><span class="delete-row text-highlight cursor-pointer hover:text-highlight/80 transition-colors">×</span></td>
+                `;
+            } else {
+                // 蓄电池组BOM表格结构
+                newRow.innerHTML = `
+                    <td class="bom-index p-3 border-b border-border">${rowCount + 1}</td>
+                    <td class="p-3 border-b border-border"><input type="text" class="bom-category w-full p-2 border border-gray-300 rounded input-focus"></td>
+                    <td class="p-3 border-b border-border"><input type="text" class="bom-item w-full p-2 border border-gray-300 rounded input-focus"></td>
+                    <td class="p-3 border-b border-border"><input type="text" class="bom-subitem w-full p-2 border border-gray-300 rounded input-focus"></td>
+                    <td class="p-3 border-b border-border"><input type="text" class="bom-description w-full p-2 border border-gray-300 rounded input-focus"></td>
+                    <td class="p-3 border-b border-border"><input type="number" step="0.01" class="bom-qty w-full p-2 border border-gray-300 rounded input-focus" value="1"></td>
+                    <td class="p-3 border-b border-border"><input type="text" class="bom-unit w-full p-2 border border-gray-300 rounded input-focus" value="个"></td>
+                    <td class="p-3 border-b border-border"><input type="number" step="0.01" class="bom-price w-full p-2 border border-gray-300 rounded input-focus"></td>
+                    <td class="p-3 border-b border-border"><div class="amount-container"><span class="bom-subtotal">0.00</span><span>元</span></div></td>
+                    <td class="p-3 border-b border-border"><span class="delete-row text-highlight cursor-pointer hover:text-highlight/80 transition-colors">×</span></td>
+                `;
+            }
+            
+            tbody.appendChild(newRow);
+            
+            // 绑定删除行事件
+            const deleteBtn = newRow.querySelector('.delete-row');
+            deleteBtn.addEventListener('click', function() {
+                newRow.remove();
+                updateBomIndexes(table);
+                updateBomCalculations(getProductTypeFromTable(table));
+            });
+            
+            // 绑定输入事件
+            const inputs = newRow.querySelectorAll('.bom-qty, .bom-price, .bom-loss');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    updateBomRow(newRow, productType);
+                    updateBomCalculations(productType);
+                });
+            });
+        }
+        
+        // 更新BOM行索引
+        function updateBomIndexes(table) {
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach((row, index) => {
+                row.querySelector('.bom-index').textContent = index + 1;
+            });
+        }
+        
+        // 从表格获取产品类型
+        function getProductTypeFromTable(table) {
+            return table.id.includes('solar') ? 'solar' : 'battery';
+        }
+        
+        // 绑定BOM事件
+        function bindBomEvents(productType) {
+            const table = document.getElementById(`${productType}-bom-table`);
+            
+            table.addEventListener('input', function(e) {
+                if (e.target.classList.contains('bom-qty') || e.target.classList.contains('bom-price') || e.target.classList.contains('bom-loss')) {
+                    updateBomRow(e.target.closest('tr'), productType);
+                    updateBomCalculations(productType);
+                }
+            });
+        }
+        
+        // 绑定材料成本事件
+        function bindMaterialEvents(productType) {
+            const materialTestInput = document.getElementById(`${productType}-material-test`);
+            if (materialTestInput) {
+                materialTestInput.addEventListener('input', function() {
+                    calculateTotalCost(productType);
+                });
+            }
+        }
+        
+        // 更新BOM行计算
+        function updateBomRow(row, productType) {
+            const qty = parseFloat(row.querySelector('.bom-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.bom-price').value) || 0;
+            
+            if (productType === 'solar') {
+                const loss = parseFloat(row.querySelector('.bom-loss').value) || 0;
+                const totalQty = qty + (qty * loss);
+                row.querySelector('.bom-total-qty').textContent = totalQty.toFixed(2);
+                row.querySelector('.bom-subtotal').textContent = (totalQty * price).toFixed(2);
+            } else {
+                row.querySelector('.bom-subtotal').textContent = (qty * price).toFixed(2);
+            }
+        }
+        
+        // 更新BOM计算
+        function updateBomCalculations(productType) {
+            const table = document.getElementById(`${productType}-bom-table`);
+            const rows = table.querySelectorAll('tbody tr');
+            let total = 0;
+            
+            rows.forEach(row => {
+                const subtotal = parseFloat(row.querySelector('.bom-subtotal').textContent) || 0;
+                total += subtotal;
+            });
+            
+            document.getElementById(`${productType}-bom-total`).textContent = total.toFixed(2);
+            document.getElementById(`${productType}-bom-total-branch`).textContent = total.toFixed(2);
+            
+            calculateTotalCost(productType);
+        }
+        
+        // 绑定部门事件
+        function bindDepartmentEvents() {
+            // 太阳电池阵部门参数
+            const solarInputs = document.querySelectorAll('#solar-panel input[id^="solar-"]');
+            solarInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    updateDepartmentCalculations('solar');
+                });
+            });
+            
+            // 蓄电池组部门参数
+            const batteryInputs = document.querySelectorAll('#battery-pack input[id^="battery-"]');
+            batteryInputs.forEach(input => {
+                if (input.id.includes('tech-') || input.id.includes('prod-') || input.id.includes('test-')) {
+                    input.addEventListener('input', function() {
+                        updateDepartmentCalculations('battery');
+                    });
+                }
+            });
+        }
+        
+        // 更新部门计算
+        function updateDepartmentCalculations(productType) {
+            // 技术部
+            const techPeople = parseInt(document.getElementById(`${productType}-tech-people`).value) || 0;
+            const techDays = parseInt(document.getElementById(`${productType}-tech-days`).value) || 0;
+            const techHours = techPeople * techDays * 8;
+            document.getElementById(`${productType}-tech-hours`).textContent = techHours;
+            
+            // 生产部
+            const prodPeople = parseInt(document.getElementById(`${productType}-prod-people`).value) || 0;
+            const prodDays = parseInt(document.getElementById(`${productType}-prod-days`).value) || 0;
+            const prodHours = prodPeople * prodDays * 8;
+            document.getElementById(`${productType}-prod-hours`).textContent = prodHours;
+            
+            // 试验部
+            const testPeople = parseInt(document.getElementById(`${productType}-test-people`).value) || 0;
+            const testDays = parseInt(document.getElementById(`${productType}-test-days`).value) || 0;
+            const testHours = testPeople * testDays * 12;
+            document.getElementById(`${productType}-test-hours`).textContent = testHours;
+            
+            // 总工时
+            const totalHours = techHours + prodHours + testHours;
+            document.getElementById(`${productType}-total-hours`).textContent = totalHours;
+            
+            // 机器工时
+            const machineHours = testDays * 12;
+            document.getElementById(`${productType}-machine-hours`).textContent = machineHours;
+            
+            // 全月可生产数量
+            const monthlyProduction = prodHours > 0 ? (2784 / prodHours) : 0;
+            const monthlyProductionFormatted = monthlyProduction % 1 === 0 ? 
+                monthlyProduction.toFixed(0) : 
+                monthlyProduction.toFixed(10);
+            document.getElementById(`${productType}-monthly-production`).textContent = monthlyProductionFormatted;
+            
+            // 更新人力成本
+            updateLaborCosts(productType, prodHours, techHours, testHours, monthlyProduction);
+            
+            // 更新制造费用
+            updateExpenseCosts(productType, prodHours, techHours, machineHours);
+            
+            // 更新总成本
+            calculateTotalCost(productType);
+        }
+        
+        // 更新人力成本
+        function updateLaborCosts(productType, prodHours, techHours, testHours, monthlyProduction) {
+            const productionCost = prodHours * 46.24;
+            const designCost = techHours * 93.35;
+            const testLaborCost = testHours * 41.32;
+            const auxiliaryCost = monthlyProduction > 0 ? (83818.52412 / monthlyProduction) : 0;
+            
+            document.getElementById(`${productType}-production-cost`).textContent = productionCost.toFixed(2);
+            document.getElementById(`${productType}-design-cost`).textContent = designCost.toFixed(2);
+            document.getElementById(`${productType}-test-labor-cost`).textContent = testLaborCost.toFixed(2);
+            document.getElementById(`${productType}-auxiliary-cost`).textContent = auxiliaryCost.toFixed(3);
+            
+            // 更新分支显示
+            document.getElementById(`${productType}-production-branch`).textContent = productionCost.toFixed(2);
+            document.getElementById(`${productType}-design-branch`).textContent = designCost.toFixed(2);
+            document.getElementById(`${productType}-test-labor-branch`).textContent = testLaborCost.toFixed(2);
+            document.getElementById(`${productType}-auxiliary-branch`).textContent = auxiliaryCost.toFixed(3);
+            
+            // 更新人力总成本
+            const laborTotal = productionCost + designCost + testLaborCost + auxiliaryCost;
+            document.getElementById(`${productType}-labor-total`).textContent = laborTotal.toFixed(3);
+        }
+        
+        // 更新制造费用
+        function updateExpenseCosts(productType, prodHours, techHours, machineHours) {
+            const manufacturingExpense = prodHours * 107.23;
+            const designExpense = techHours * 97.78;
+            const testExpense = machineHours * 107.35;
+            
+            document.getElementById(`${productType}-manufacturing-expense`).textContent = manufacturingExpense.toFixed(2);
+            document.getElementById(`${productType}-design-expense`).textContent = designExpense.toFixed(2);
+            document.getElementById(`${productType}-test-expense`).textContent = testExpense.toFixed(2);
+            
+            // 更新分支显示
+            document.getElementById(`${productType}-manufacturing-branch`).textContent = manufacturingExpense.toFixed(2);
+            document.getElementById(`${productType}-design-expense-branch`).textContent = designExpense.toFixed(2);
+            document.getElementById(`${productType}-test-expense-branch`).textContent = testExpense.toFixed(2);
+            
+            // 更新制造费用总额
+            const expenseTotal = manufacturingExpense + designExpense + testExpense;
+            document.getElementById(`${productType}-expense-total`).textContent = expenseTotal.toFixed(2);
+        }
+        
+        // 绑定外购成本事件
+        function bindOutsourcingEvents(productType) {
+            const inputs = document.querySelectorAll(`#${productType}-outsourcing-equipment, #${productType}-outsourcing-materials, #${productType}-outsourcing-labor, #${productType}-outsourcing-other`);
+            
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    updateOutsourcingCost(productType);
+                });
+            });
+        }
+        
+        // 更新外购成本
+        function updateOutsourcingCost(productType) {
+            const equipment = parseFloat(document.getElementById(`${productType}-outsourcing-equipment`).value) || 0;
+            const materials = parseFloat(document.getElementById(`${productType}-outsourcing-materials`).value) || 0;
+            const labor = parseFloat(document.getElementById(`${productType}-outsourcing-labor`).value) || 0;
+            const other = parseFloat(document.getElementById(`${productType}-outsourcing-other`).value) || 0;
+            
+            const total = equipment + materials + labor + other;
+            
+            document.getElementById(`${productType}-outsourcing-total`).textContent = total.toFixed(2);
+            document.getElementById(`${productType}-outsourcing-total-branch`).textContent = total.toFixed(2);
+            
+            calculateTotalCost(productType);
+        }
+        
+        // 绑定项目费用事件
+        function bindProjectEvents(productType) {
+            const inputs = document.querySelectorAll(`#${productType}-project-a-travel, #${productType}-project-a-mail, #${productType}-project-b-consult, #${productType}-project-b-agent, #${productType}-project-b-bid, #${productType}-project-b-win, #${productType}-project-c-audit, #${productType}-project-other-mgmt, #${productType}-project-other-sales, #${productType}-project-other-rd, #${productType}-project-other-finance`);
+            
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    updateProjectCosts(productType);
+                });
+            });
+        }
+        
+        // 更新项目费用
+        function updateProjectCosts(productType) {
+            // A类费用
+            const travel = parseFloat(document.getElementById(`${productType}-project-a-travel`).value) || 0;
+            const mail = parseFloat(document.getElementById(`${productType}-project-a-mail`).value) || 0;
+            const aTotal = travel + mail;
+            document.getElementById(`${productType}-project-a-total`).textContent = aTotal.toFixed(2);
+            
+            // B类费用
+            const consult = parseFloat(document.getElementById(`${productType}-project-b-consult`).value) || 0;
+            const agent = parseFloat(document.getElementById(`${productType}-project-b-agent`).value) || 0;
+            const bid = parseFloat(document.getElementById(`${productType}-project-b-bid`).value) || 0;
+            const win = parseFloat(document.getElementById(`${productType}-project-b-win`).value) || 0;
+            const bTotal = consult + agent + bid + win;
+            document.getElementById(`${productType}-project-b-total`).textContent = bTotal.toFixed(2);
+            
+            // C类费用
+            const audit = parseFloat(document.getElementById(`${productType}-project-c-audit`).value) || 0;
+            const cTotal = audit;
+            document.getElementById(`${productType}-project-c-total`).textContent = cTotal.toFixed(2);
+            
+            // 其他费用
+            const mgmt = parseFloat(document.getElementById(`${productType}-project-other-mgmt`).value) || 0;
+            const sales = parseFloat(document.getElementById(`${productType}-project-other-sales`).value) || 0;
+            const rd = parseFloat(document.getElementById(`${productType}-project-other-rd`).value) || 0;
+            const finance = parseFloat(document.getElementById(`${productType}-project-other-finance`).value) || 0;
+            const otherTotal = mgmt + sales + rd + finance;
+            document.getElementById(`${productType}-project-other-total`).textContent = otherTotal.toFixed(2);
+            
+            // 项目费用总计
+            const projectTotal = aTotal + bTotal + cTotal + otherTotal;
+            document.getElementById(`${productType}-project-total`).textContent = projectTotal.toFixed(2);
+            document.getElementById(`${productType}-project-total-branch`).textContent = projectTotal.toFixed(2);
+            
+            calculateTotalCost(productType);
+        }
+        
+        // 计算总成本
+        function calculateTotalCost(productType) {
+            // 材料总成本
+            const bomTotal = parseFloat(document.getElementById(`${productType}-bom-total`).textContent) || 0;
+            const testMaterial = parseFloat(document.getElementById(`${productType}-material-test`).value) || 0;
+            const materialTotal = bomTotal + testMaterial;
+            document.getElementById(`${productType}-material-total`).textContent = materialTotal.toFixed(2);
+            document.getElementById(`${productType}-test-total-branch`).textContent = testMaterial.toFixed(2);
+            
+            // 人力总成本
+            const laborTotal = parseFloat(document.getElementById(`${productType}-labor-total`).textContent) || 0;
+            
+            // 制造费用总额
+            const expenseTotal = parseFloat(document.getElementById(`${productType}-expense-total`).textContent) || 0;
+            
+            // 外购总成本
+            const outsourcingTotal = parseFloat(document.getElementById(`${productType}-outsourcing-total`).textContent) || 0;
+            
+            // 项目费用总计
+            const projectTotal = parseFloat(document.getElementById(`${productType}-project-total`).textContent) || 0;
+            
+            // 产品总成本（不含税）
+            const totalCost = materialTotal + laborTotal + expenseTotal + outsourcingTotal + projectTotal;
+            document.getElementById(`${productType}-total-cost`).textContent = totalCost.toFixed(3);
+            
+            // 计算税金和报价
+            calculateTaxesAndQuote(productType, totalCost, bomTotal, expenseTotal);
+            
+            // 更新图表
+            updateChart(productType, materialTotal, laborTotal, expenseTotal, outsourcingTotal, projectTotal);
+        }
+        
+        // 计算税金和报价
+        function calculateTaxesAndQuote(productType, totalCost, bomTotal, expenseTotal) {
+            // 1. 先计算报价金额（含税）
+            const quoteAmount = (totalCost * 0.13 * 0.12) + (totalCost * 1.13);
+            document.getElementById(`${productType}-quote-amount`).textContent = quoteAmount.toFixed(2);
+            
+            // 2. 计算增值税
+            const manufacturingExpense = parseFloat(document.getElementById(`${productType}-manufacturing-expense`).textContent) || 0;
+            
+            const outputTax = (quoteAmount / 1.13) * 0.13;
+            const inputTax = (bomTotal + manufacturingExpense) * 0.13;
+            const vat = outputTax - inputTax;
+            const vatAmount = Math.max(0, vat);
+            document.getElementById(`${productType}-tax-vat`).textContent = vatAmount.toFixed(2);
+            document.getElementById(`${productType}-tax-vat-branch`).textContent = vatAmount.toFixed(2);
+            
+            // 3. 计算附加税
+            const surcharge = (vatAmount * 0.07) + (vatAmount * 0.05) + (quoteAmount * 0.0003);
+            document.getElementById(`${productType}-tax-surcharge`).textContent = surcharge.toFixed(2);
+            document.getElementById(`${productType}-tax-surcharge-branch`).textContent = surcharge.toFixed(2);
+            
+            // 4. 计算税金总计
+            const taxTotal = vatAmount + surcharge;
+            document.getElementById(`${productType}-tax-total`).textContent = taxTotal.toFixed(2);
+            document.getElementById(`${productType}-tax-total-branch`).textContent = taxTotal.toFixed(2);
+        }
+        
+        // 初始化图表
+        function initCharts() {
+            // 太阳电池阵图表
+            const solarCtx = document.getElementById('solar-cost-chart');
+            if (solarCtx) {
+                window.solarChart = new Chart(solarCtx.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['材料成本', '人力成本', '制造费用', '外购成本', '项目费用'],
+                        datasets: [{
+                            data: [0, 1853.326, 2928.28, 0, 0],
+                            backgroundColor: [
+                                '#3498db',
+                                '#9b59b6',
+                                '#f39c12',
+                                '#1abc9c',
+                                '#e74c3c'
+                            ],
+                            borderWidth: 1,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true,
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
+                                        return `${label}: ${value.toFixed(2)}元 (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // 蓄电池组图表
+            const batteryCtx = document.getElementById('battery-cost-chart');
+            if (batteryCtx) {
+                window.batteryChart = new Chart(batteryCtx.getContext('2d'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['材料成本', '人力成本', '制造费用', '外购成本', '项目费用'],
+                        datasets: [{
+                            data: [0, 1853.326, 2928.28, 0, 0],
+                            backgroundColor: [
+                                '#3498db',
+                                '#9b59b6',
+                                '#f39c12',
+                                '#1abc9c',
+                                '#e74c3c'
+                            ],
+                            borderWidth: 1,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true,
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
+                                        return `${label}: ${value.toFixed(2)}元 (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // 绑定图表类型切换事件
+        function bindChartTypeEvents() {
+            // 太阳电池阵图表类型切换
+            const solarChartBtns = document.querySelectorAll('#solar-panel .chart-type-btn');
+            solarChartBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    solarChartBtns.forEach(b => b.classList.remove('active', 'bg-secondary', 'text-white'));
+                    solarChartBtns.forEach(b => b.classList.add('bg-gray-200', 'text-gray-700'));
+                    
+                    this.classList.remove('bg-gray-200', 'text-gray-700');
+                    this.classList.add('active', 'bg-secondary', 'text-white');
+                    
+                    const chartType = this.getAttribute('data-type');
+                    changeChartType('solar', chartType);
+                });
+            });
+            
+            // 蓄电池组图表类型切换
+            const batteryChartBtns = document.querySelectorAll('#battery-pack .chart-type-btn');
+            batteryChartBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    batteryChartBtns.forEach(b => b.classList.remove('active', 'bg-secondary', 'text-white'));
+                    batteryChartBtns.forEach(b => b.classList.add('bg-gray-200', 'text-gray-700'));
+                    
+                    this.classList.remove('bg-gray-200', 'text-gray-700');
+                    this.classList.add('active', 'bg-secondary', 'text-white');
+                    
+                    const chartType = this.getAttribute('data-type');
+                    changeChartType('battery', chartType);
+                });
+            });
+        }
+        
+        // 更改图表类型
+        function changeChartType(productType, chartType) {
+            const chart = productType === 'solar' ? window.solarChart : window.batteryChart;
+            
+            if (chart) {
+                chart.config.type = chartType;
+                chart.update();
+            }
+        }
+        
+        // 更新图表
+        function updateChart(productType, materialTotal, laborTotal, expenseTotal, outsourcingTotal, projectTotal) {
+            const chart = productType === 'solar' ? window.solarChart : window.batteryChart;
+            const legendElement = document.getElementById(`${productType}-chart-legend`);
+            
+            if (chart) {
+                const data = [materialTotal, laborTotal, expenseTotal, outsourcingTotal, projectTotal];
+                const total = data.reduce((a, b) => a + b, 0);
+                
+                chart.data.datasets[0].data = data;
+                chart.update();
+                
+                // 更新图例显示
+                if (legendElement) {
+                    let legendHtml = '<div class="grid grid-cols-2 gap-2">';
+                    const labels = ['材料成本', '人力成本', '制造费用', '外购成本', '项目费用'];
+                    const colors = ['#3498db', '#9b59b6', '#f39c12', '#1abc9c', '#e74c3c'];
+                    
+                    labels.forEach((label, index) => {
+                        const value = data[index];
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
+                        legendHtml += `
+                            <div class="chart-legend-item">
+                                <div class="chart-legend-color" style="background-color: ${colors[index]}"></div>
+                                <span class="flex-grow">${label}</span>
+                                <span class="font-medium">${percentage}%</span>
+                            </div>
+                        `;
+                    });
+                    
+                    legendHtml += '</div>';
+                    legendElement.innerHTML = legendHtml;
+                }
+            }
+        }
+        
+        // 计算所有成本
+        function calculateAllCosts(productType) {
+            updateDepartmentCalculations(productType);
+            updateBomCalculations(productType);
+            updateOutsourcingCost(productType);
+            updateProjectCosts(productType);
+            calculateTotalCost(productType);
+        }
+        
+        // 从Excel粘贴功能
+        function pasteFromExcel(table, productType) {
+            navigator.clipboard.readText().then(text => {
+                const rows = text.split('\n');
+                const tbody = table.querySelector('tbody');
+                
+                // 清空现有行
+                tbody.innerHTML = '';
+                
+                // 添加新行
+                rows.forEach((row, index) => {
+                    if (row.trim() === '') return;
+                    
+                    const cells = row.split('\t');
+                    
+                    if (productType === 'solar' && cells.length >= 7) {
+                        addBomRow(table, productType);
+                        const newRow = tbody.lastChild;
+                        
+                        newRow.querySelector('.bom-name').value = cells[0] || '';
+                        newRow.querySelector('.bom-qty').value = parseFloat(cells[1]) || 1;
+                        newRow.querySelector('.bom-unit').value = cells[2] || '个';
+                        newRow.querySelector('.bom-loss').value = parseFloat(cells[3]) || 0;
+                        newRow.querySelector('.bom-price').value = parseFloat(cells[5]) || 0;
+                        
+                        updateBomRow(newRow, productType);
+                    } else if (productType === 'battery' && cells.length >= 9) {
+                        addBomRow(table, productType);
+                        const newRow = tbody.lastChild;
+                        
+                        newRow.querySelector('.bom-category').value = cells[1] || '';
+                        newRow.querySelector('.bom-item').value = cells[2] || '';
+                        newRow.querySelector('.bom-subitem').value = cells[3] || '';
+                        newRow.querySelector('.bom-description').value = cells[4] || '';
+                        newRow.querySelector('.bom-qty').value = parseFloat(cells[5]) || 1;
+                        newRow.querySelector('.bom-unit').value = cells[6] || '个';
+                        newRow.querySelector('.bom-price').value = parseFloat(cells[7]) || 0;
+                        
+                        updateBomRow(newRow, productType);
+                    }
+                });
+                
+                updateBomIndexes(table);
+                updateBomCalculations(productType);
+                
+                // 显示成功消息
+                const status = document.getElementById(`${productType}-paste-status`);
+                status.textContent = `成功导入 ${rows.filter(r => r.trim() !== '').length} 行数据`;
+                status.className = 'paste-status text-success';
+                
+                setTimeout(() => {
+                    status.textContent = '';
+                }, 3000);
+            }).catch(err => {
+                console.error('粘贴失败:', err);
+                const status = document.getElementById(`${productType}-paste-status`);
+                status.textContent = '粘贴失败，请确保已复制Excel数据';
+                status.className = 'paste-status text-highlight';
+                
+                setTimeout(() => {
+                    status.textContent = '';
+                }, 3000);
+            });
+        }
+        
+        // 导出到Excel功能
+        function exportToExcel(productType) {
+            try {
+                // 收集所有数据
+                const data = collectExportData(productType);
+                
+                // 创建工作簿
+                const wb = XLSX.utils.book_new();
+                
+                // 添加各个工作表
+                // 1. 部门参数
+                const ws1 = XLSX.utils.json_to_sheet(data.departmentParams);
+                XLSX.utils.book_append_sheet(wb, ws1, '部门参数');
+                
+                // 2. BOM表
+                const ws2 = XLSX.utils.json_to_sheet(data.bomData);
+                XLSX.utils.book_append_sheet(wb, ws2, 'BOM表');
+                
+                // 3. 成本汇总
+                const ws3 = XLSX.utils.json_to_sheet(data.costSummary);
+                XLSX.utils.book_append_sheet(wb, ws3, '成本汇总');
+                
+                // 4. 详细成本
+                const ws4 = XLSX.utils.json_to_sheet(data.detailedCosts);
+                XLSX.utils.book_append_sheet(wb, ws4, '详细成本');
+                
+                // 生成Excel文件
+                const productName = productType === 'solar' ? '太阳电池阵' : '蓄电池组';
+                const fileName = `${productName}_成本计算_${new Date().toISOString().slice(0, 10)}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+                
+                // 显示成功消息
+                const status = document.getElementById(`${productType}-export-status`);
+                status.textContent = '导出成功！';
+                status.className = 'export-status text-success font-medium';
+                
+                setTimeout(() => {
+                    status.textContent = '';
+                }, 3000);
+                
+            } catch (error) {
+                console.error('导出失败:', error);
+                const status = document.getElementById(`${productType}-export-status`);
+                status.textContent = '导出失败，请重试';
+                status.className = 'export-status text-highlight font-medium';
+                
+                setTimeout(() => {
+                    status.textContent = '';
+                }, 3000);
+            }
+        }
+        
+        // 收集导出数据
+        function collectExportData(productType) {
+            const productName = productType === 'solar' ? '太阳电池阵' : '蓄电池组';
+            const exportDate = new Date().toLocaleString('zh-CN');
+            
+            // 1. 部门参数数据
+            const departmentParams = [{
+                '产品类型': productName,
+                '导出时间': exportDate,
+                '': ''
+            }, {
+                '部门': '技术部（设计）',
+                '参与人数': document.getElementById(`${productType}-tech-people`).value,
+                '工作天数': document.getElementById(`${productType}-tech-days`).value,
+                '合计工时': document.getElementById(`${productType}-tech-hours`).textContent
+            }, {
+                '部门': '生产部',
+                '参与人数': document.getElementById(`${productType}-prod-people`).value,
+                '工作天数': document.getElementById(`${productType}-prod-days`).value,
+                '合计工时': document.getElementById(`${productType}-prod-hours`).textContent
+            }, {
+                '部门': '试验部',
+                '参与人数': document.getElementById(`${productType}-test-people`).value,
+                '工作天数': document.getElementById(`${productType}-test-days`).value,
+                '合计工时': document.getElementById(`${productType}-test-hours`).textContent
+            }, {
+                '项目': '总耗费人力工时',
+                '数值': document.getElementById(`${productType}-total-hours`).textContent
+            }, {
+                '项目': '耗费机器工时',
+                '数值': document.getElementById(`${productType}-machine-hours`).textContent
+            }, {
+                '项目': '全月可生产数量',
+                '数值': document.getElementById(`${productType}-monthly-production`).textContent + ' 件/月'
+            }];
+            
+            // 2. BOM表数据
+            const bomTable = document.getElementById(`${productType}-bom-table`);
+            const bomRows = bomTable.querySelectorAll('tbody tr');
+            const bomData = [];
+            
+            bomRows.forEach(row => {
+                if (productType === 'solar') {
+                    bomData.push({
+                        '序号': row.querySelector('.bom-index').textContent,
+                        '物料名称': row.querySelector('.bom-name').value,
+                        '数量': row.querySelector('.bom-qty').value,
+                        '单位': row.querySelector('.bom-unit').value,
+                        '损耗': row.querySelector('.bom-loss').value,
+                        '总数量': row.querySelector('.bom-total-qty').textContent,
+                        '单价（元）': row.querySelector('.bom-price').value,
+                        '总价（元）': row.querySelector('.bom-subtotal').textContent
+                    });
+                } else {
+                    bomData.push({
+                        '序号': row.querySelector('.bom-index').textContent,
+                        '分类': row.querySelector('.bom-category').value,
+                        '项目': row.querySelector('.bom-item').value,
+                        '分项': row.querySelector('.bom-subitem').value,
+                        '型号或说明': row.querySelector('.bom-description').value,
+                        '数量': row.querySelector('.bom-qty').value,
+                        '单位': row.querySelector('.bom-unit').value,
+                        '单价（元）': row.querySelector('.bom-price').value,
+                        '总价（元）': row.querySelector('.bom-subtotal').textContent
+                    });
+                }
+            });
+            
+            // 3. 成本汇总数据
+            const costSummary = [{
+                '成本类别': '材料总成本',
+                '金额（元）': document.getElementById(`${productType}-material-total`).textContent
+            }, {
+                '成本类别': 'BOM成本',
+                '金额（元）': document.getElementById(`${productType}-bom-total`).textContent
+            }, {
+                '成本类别': '试验材料成本',
+                '金额（元）': document.getElementById(`${productType}-material-test`).value || '0.00'
+            }, {
+                '成本类别': '人力总成本',
+                '金额（元）': document.getElementById(`${productType}-labor-total`).textContent
+            }, {
+                '成本类别': '制造费用总额',
+                '金额（元）': document.getElementById(`${productType}-expense-total`).textContent
+            }, {
+                '成本类别': '外购总成本',
+                '金额（元）': document.getElementById(`${productType}-outsourcing-total`).textContent
+            }, {
+                '成本类别': '项目执行费用总计',
+                '金额（元）': document.getElementById(`${productType}-project-total`).textContent
+            }, {
+                '成本类别': '产品总成本（不含税）',
+                '金额（元）': document.getElementById(`${productType}-total-cost`).textContent
+            }, {
+                '成本类别': '税金总计',
+                '金额（元）': document.getElementById(`${productType}-tax-total`).textContent
+            }, {
+                '成本类别': '报价金额（含税）',
+                '金额（元）': document.getElementById(`${productType}-quote-amount`).textContent
+            }];
+            
+            // 4. 详细成本数据
+            const detailedCosts = [];
+            
+            // 人力成本明细
+            detailedCosts.push({
+                '成本项目': '产品生产成本',
+                '金额（元）': document.getElementById(`${productType}-production-cost`).textContent,
+                '计算公式': '生产部门工时 × 46.24'
+            });
+            detailedCosts.push({
+                '成本项目': '产品设计成本',
+                '金额（元）': document.getElementById(`${productType}-design-cost`).textContent,
+                '计算公式': '设计总工时 × 93.35'
+            });
+            detailedCosts.push({
+                '成本项目': '试验人力成本',
+                '金额（元）': document.getElementById(`${productType}-test-labor-cost`).textContent,
+                '计算公式': '试验工时 × 41.32'
+            });
+            detailedCosts.push({
+                '成本项目': '辅助人员成本',
+                '金额（元）': document.getElementById(`${productType}-auxiliary-cost`).textContent,
+                '计算公式': '83818.52412 / 全月可生产数量'
+            });
+            
+            // 制造费用明细
+            detailedCosts.push({
+                '成本项目': '生产制造费分摊',
+                '金额（元）': document.getElementById(`${productType}-manufacturing-expense`).textContent,
+                '计算公式': '生产总工时 × 107.23'
+            });
+            detailedCosts.push({
+                '成本项目': '设计相关分摊制造费',
+                '金额（元）': document.getElementById(`${productType}-design-expense`).textContent,
+                '计算公式': '设计总工时 × 97.78'
+            });
+            detailedCosts.push({
+                '成本项目': '试验制造分摊',
+                '金额（元）': document.getElementById(`${productType}-test-expense`).textContent,
+                '计算公式': '耗费机器工时 × 107.35'
+            });
+            
+            // 外购成本明细
+            detailedCosts.push({
+                '成本项目': '外配、成套设备成本',
+                '金额（元）': document.getElementById(`${productType}-outsourcing-equipment`).value || '0.00'
+            });
+            detailedCosts.push({
+                '成本项目': '安装材料成本',
+                '金额（元）': document.getElementById(`${productType}-outsourcing-materials`).value || '0.00'
+            });
+            detailedCosts.push({
+                '成本项目': '安装人工成本',
+                '金额（元）': document.getElementById(`${productType}-outsourcing-labor`).value || '0.00'
+            });
+            detailedCosts.push({
+                '成本项目': '其他外购成本',
+                '金额（元）': document.getElementById(`${productType}-outsourcing-other`).value || '0.00'
+            });
+            
+            // 税金明细
+            detailedCosts.push({
+                '成本项目': '增值税',
+                '金额（元）': document.getElementById(`${productType}-tax-vat`).textContent
+            });
+            detailedCosts.push({
+                '成本项目': '附加税',
+                '金额（元）': document.getElementById(`${productType}-tax-surcharge`).textContent
+            });
+            
+            return {
+                departmentParams,
+                bomData,
+                costSummary,
+                detailedCosts
+            };
+        }
+    </script>
+</body>
+</html>
