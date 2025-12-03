@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>费率配置 - 产品成本计算器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2c3e50',
+                        secondary: '#3498db',
+                        success: '#2ecc71',
+                        warning: '#f39c12',
+                        danger: '#e74c3c',
+                        lightgray: '#f5f7fa',
+                        border: '#dce1e8',
+                        text: '#333'
+                    },
+                    fontFamily: {
+                        sans: ['Segoe UI', 'Tahoma', 'Geneva', 'Verdana', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .card-shadow {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            }
+            .hover-lift {
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+            .hover-lift:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+            }
+            .input-focus {
+                @apply focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20;
+            }
+            .fade-in {
+                animation: fadeIn 0.3s ease;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-text">
+    <!-- 配置页面 -->
+    <div id="config-screen" class="min-h-screen p-4 md:p-6">
+        <div class="container max-w-5xl mx-auto">
+            <!-- 顶部导航栏 -->
+            <header class="bg-primary text-white p-5 rounded-t-2xl card-shadow border-b-4 border-secondary mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-semibold">产品成本计算器 - 费率配置</h1>
+                        <p class="text-sm text-gray-300 mt-1">管理所有固定费率参数</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <a href="index.html" 
+                           class="bg-secondary/20 hover:bg-secondary/30 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                            <i class="fa fa-arrow-left"></i>
+                            <span>返回计算器</span>
+                        </a>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- 配置说明 -->
+            <div class="bg-white border border-border rounded-lg p-5 mb-6 card-shadow hover-lift">
+                <div class="flex items-start">
+                    <div class="bg-blue-50 p-3 rounded-lg mr-4">
+                        <i class="fa fa-info-circle text-secondary text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-primary font-semibold text-lg mb-2">配置说明</h3>
+                        <p class="text-gray-600 mb-2">在此页面配置产品成本计算器中使用的所有固定费率参数。配置将自动保存到浏览器本地存储中。</p>
+                        <p class="text-gray-600 text-sm">注意：修改费率后，返回计算器页面可能需要刷新才能应用新的费率。</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 费率配置表单 -->
+            <div class="bg-white border border-border rounded-lg p-5 mb-6 card-shadow hover-lift">
+                <h3 class="text-primary font-semibold text-lg mb-6 pb-2 border-b border-border">费率参数配置</h3>
+                
+                <form id="rates-form" class="space-y-6">
+                    <!-- 部门工时配置 -->
+                    <div class="config-section border border-border rounded-md p-5">
+                        <h4 class="text-secondary font-semibold text-md mb-4 flex items-center">
+                            <i class="fa fa-clock-o mr-2"></i>
+                            部门工时配置
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="form-group">
+                                <label class="block text-gray-700 font-medium mb-2">
+                                    试验每日工时（小时）
+                                    <span class="text-gray-500 text-sm font-normal">试验部工时计算</span>
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        min="0" 
+                                        id="daily-test-hours" 
+                                        class="w-full p-3 border border-gray-300 rounded-lg input-focus"
+                                        required
+                                    >
+                                    <div class="absolute right-3 top-3 text-gray-400">
+                                        小时/日
+                                    </div>
+                                </div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-2">
+                                    公式：试验工时 = 试验人数 × 试验天数 × 试验每日工时
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-gray-700 font-medium mb-2">
+                                    每月基准工时（小时）
+                                    <span class="text-gray-500 text-sm font-normal">全月可生产数量计算</span>
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        min="0" 
+                                        id="monthly-base-hours" 
+                                        class="w-full p-3 border border-gray-300 rounded-lg input-focus"
+                                        required
+                                    >
+                                    <div class="absolute right-3 top-3 text-gray-400">
+                                        小时/月
+                                    </div>
+                                </div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-2">
+                                    公式：全月可生产数量 = 每月基准工时 / 生产部工时
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 人力成本费率配置 -->
+                    <div class="config-section border border-border rounded-md p-5">
+                        <h4 class="text-secondary font-semibold text-md mb-4 flex items-center">
+                            <i class="fa fa-users mr-2"></i>
+                            人力成本费率配置
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="form-group">
+                                <label class="block text-gray-700 font-medium mb-2">
+                                    生产成本费率（元/小时）
+                                    <span class="text-gray-500 text-sm font-normal">产品生产成本计算</span>
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        min="0" 
+                                        id="production-cost-rate" 
+                                        class="w-full p-3 border border-gray-300 rounded-lg input-focus"
+                                        required
+                                    >
+                                    <div class="absolute right-3 top-3 text-gray-400">
+                                        元/小时
+                                    </div>
+                                </div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-2">
+                                    公式：产品生产成本 = 生产部门工时 × 生产成本费率
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-gray-700 font-medium mb-2">
+                                    设计成本费率（元/小时）
+                                    <span class="text-gray-500 text-sm font-normal">产品设计成本计算</span>
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        min="0" 
+                                        id="design-cost-rate" 
+                                        class="w-full p-3 border border-gray-300 rounded-lg input-focus"
+                                        required
+                                    >
+                                    <div class="absolute right-3 top-3 text-gray-400">
+                                        元/小时
+                                    </div>
+                                </div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-2">
+                                    公式：产品设计成本 = 设计总工时 × 设计成本费率
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-gray-700 font-medium mb-2">
+                                    试验人力费率（元/小时）
+                                    <span class="text-gray-500 text-sm font-normal">试验人力成本计算</span>
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        min="0" 
+                                        id="test-labor-rate" 
+                                        class="w-full p-3 border border-gray-300 rounded-lg input-focus"
+                                        required
+                                    >
+                                    <div class="absolute right-3 top-3 text-gray-400">
+                                        元/小时
+                                    </div>
+                                </div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-2">
+                                    公式：试验人力成本 = 试验工时 × 试验人力费率
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-gray-700 font-medium mb-2">
+                                    辅助人员成本基数（元/月）
+                                    <span class="text-gray-500 text-sm font-normal">辅助人员成本分摊计算</span>
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        min="0" 
+                                        id="auxiliary-cost-base" 
+                                        class="w-full p-3 border border-gray-300 rounded-lg input-focus"
+                                        required
+                                    >
+                                    <div class="absolute right-3 top-3 text-gray-400">
+                                        元/月
+                                    </div>
+                                </div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-2">
+                                    公式：辅助人员成本 = 辅助人员成本基数 / 全月可生产数量
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 制造费用费率配置 -->
+                    <div class="config-section border border-border rounded-md p-5">
+                        <h4 class="text-secondary font-semibold text-md mb-4 flex items-center">
+                            <i class="fa fa-industry mr-2"></i>
+                            制造费用费率配置
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="form-group">
+                                <label class="block text-gray-700 font-medium mb-2">
+                                    生产制造费率（元/小时）
+                                    <span class="text-gray-500 text-sm font-normal">生产制造费分摊计算</span>
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        min="0" 
+                                        id="production-manufacturing-rate" 
+                                        class="w-full p-3 border border-gray-300 rounded-lg input-focus"
+                                        required
+                                    >
+                                    <div class="absolute right-3 top-3 text-gray-400">
+                                        元/小时
+                                    </div>
+                                </div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-2">
+                                    公式：生产制造费分摊 = 生产总工时 × 生产制造费率
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-gray-700 font-medium mb-2">
+                                    设计制造费率（元/小时）
+                                    <span class="text-gray-500 text-sm font-normal">设计相关制造费分摊计算</span>
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        min="0" 
+                                        id="design-manufacturing-rate" 
+                                        class="w-full p-3 border border-gray-300 rounded-lg input-focus"
+                                        required
+                                    >
+                                    <div class="absolute right-3 top-3 text-gray-400">
+                                        元/小时
+                                    </div>
+                                </div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-2">
+                                    公式：设计相关制造费分摊 = 设计总工时 × 设计制造费率
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-gray-700 font-medium mb-2">
+                                    试验制造费率（元/小时）
+                                    <span class="text-gray-500 text-sm font-normal">试验制造分摊计算</span>
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        min="0" 
+                                        id="test-manufacturing-rate" 
+                                        class="w-full p-3 border border-gray-300 rounded-lg input-focus"
+                                        required
+                                    >
+                                    <div class="absolute right-3 top-3 text-gray-400">
+                                        元/小时
+                                    </div>
+                                </div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-2">
+                                    公式：试验制造分摊 = 耗费机器工时 × 试验制造费率
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div class="flex flex-wrap gap-4 pt-6 border-t border-border">
+                        <button 
+                            type="submit"
+                            class="bg-secondary hover:bg-secondary/90 text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition-all"
+                        >
+                            <i class="fa fa-save"></i>
+                            <span>保存配置</span>
+                        </button>
+                        
+                        <button 
+                            type="button"
+                            id="reset-btn"
+                            class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition-all"
+                        >
+                            <i class="fa fa-refresh"></i>
+                            <span>重置为默认值</span>
+                        </button>
+                        
+                        <button 
+                            type="button"
+                            id="export-btn"
+                            class="bg-success hover:bg-success/90 text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition-all"
+                        >
+                            <i class="fa fa-download"></i>
+                            <span>导出配置</span>
+                        </button>
+                        
+                        <button 
+                            type="button"
+                            id="import-btn"
+                            class="bg-warning hover:bg-warning/90 text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition-all"
+                        >
+                            <i class="fa fa-upload"></i>
+                            <span>导入配置</span>
+                        </button>
+                        
+                        <input type="file" id="import-file" class="hidden" accept=".json">
+                    </div>
+                    
+                    <!-- 状态消息 -->
+                    <div id="status-message" class="hidden p-4 rounded-lg"></div>
+                </form>
+            </div>
+            
+            <!-- 当前配置信息 -->
+            <div class="bg-white border border-border rounded-lg p-5 card-shadow hover-lift">
+                <h3 class="text-primary font-semibold text-lg mb-4">当前配置信息</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="config-info-item bg-lightgray p-4 rounded-lg">
+                        <div class="text-sm text-gray-500">配置存储位置</div>
+                        <div class="text-lg font-medium" id="storage-info">本地存储</div>
+                    </div>
+                    
+                    <div class="config-info-item bg-lightgray p-4 rounded-lg">
+                        <div class="text-sm text-gray-500">最后更新时间</div>
+                        <div class="text-lg font-medium" id="last-updated">-</div>
+                    </div>
+                    
+                    <div class="config-info-item bg-lightgray p-4 rounded-lg md:col-span-2">
+                        <div class="text-sm text-gray-500">配置说明</div>
+                        <div class="text-md mt-1">配置保存在浏览器本地存储中，更换设备或浏览器时配置不会同步。可以使用"导出配置"功能备份配置，在新设备上使用"导入配置"功能恢复。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 默认费率配置
+        const DEFAULT_RATES = {
+            dailyTestHours: 12,            // 试验每日工时（小时）
+            monthlyBaseHours: 2784,        // 每月基准工时（小时）
+            productionCostRate: 46.24,     // 生产成本费率（元/小时）
+            designCostRate: 93.35,         // 设计成本费率（元/小时）
+            testLaborRate: 41.32,          // 试验人力费率（元/小时）
+            auxiliaryCostBase: 83818.52412, // 辅助人员成本基数（元/月）
+            productionManufacturingRate: 107.23, // 生产制造费率（元/小时）
+            designManufacturingRate: 97.78, // 设计制造费率（元/小时）
+            testManufacturingRate: 107.35  // 试验制造费率（元/小时）
+        };
+        
+        // 当前费率配置
+        let currentRates = {};
+        
+        // DOM加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载费率配置
+            loadRatesConfig();
+            
+            // 表单提交事件
+            document.getElementById('rates-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveRatesConfig();
+            });
+            
+            // 重置按钮事件
+            document.getElementById('reset-btn').addEventListener('click', function() {
+                if (confirm('确定要重置所有费率为默认值吗？')) {
+                    resetToDefault();
+                }
+            });
+            
+            // 导出按钮事件
+            document.getElementById('export-btn').addEventListener('click', function() {
+                exportConfig();
+            });
+            
+            // 导入按钮事件
+            document.getElementById('import-btn').addEventListener('click', function() {
+                document.getElementById('import-file').click();
+            });
+            
+            // 导入文件选择事件
+            document.getElementById('import-file').addEventListener('change', function(e) {
+                importConfig(e.target.files[0]);
+            });
+            
+            // 更新存储信息显示
+            updateStorageInfo();
+        });
+        
+        // 加载费率配置
+        function loadRatesConfig() {
+            try {
+                // 尝试从本地存储加载
+                const savedRates = localStorage.getItem('cost_calculator_rates');
+                
+                if (savedRates) {
+                    currentRates = JSON.parse(savedRates);
+                    showStatus('成功加载保存的配置', 'success');
+                } else {
+                    // 使用默认配置
+                    currentRates = {...DEFAULT_RATES};
+                    showStatus('使用默认配置', 'info');
+                }
+                
+                // 填充表单
+                fillFormWithRates();
+                
+                // 更新最后更新时间
+                updateLastUpdated();
+                
+            } catch (error) {
+                console.error('加载配置失败:', error);
+                currentRates = {...DEFAULT_RATES};
+                fillFormWithRates();
+                showStatus('加载配置失败，使用默认配置', 'danger');
+            }
+        }
+        
+        // 用费率填充表单
+        function fillFormWithRates() {
+            document.getElementById('daily-test-hours').value = currentRates.dailyTestHours;
+            document.getElementById('monthly-base-hours').value = currentRates.monthlyBaseHours;
+            document.getElementById('production-cost-rate').value = currentRates.productionCostRate;
+            document.getElementById('design-cost-rate').value = currentRates.designCostRate;
+            document.getElementById('test-labor-rate').value = currentRates.testLaborRate;
+            document.getElementById('auxiliary-cost-base').value = currentRates.auxiliaryCostBase;
+            document.getElementById('production-manufacturing-rate').value = currentRates.productionManufacturingRate;
+            document.getElementById('design-manufacturing-rate').value = currentRates.designManufacturingRate;
+            document.getElementById('test-manufacturing-rate').value = currentRates.testManufacturingRate;
+        }
+        
+        // 保存费率配置
+        function saveRatesConfig() {
+            try {
+                // 从表单收集数据
+                currentRates = {
+                    dailyTestHours: parseFloat(document.getElementById('daily-test-hours').value) || DEFAULT_RATES.dailyTestHours,
+                    monthlyBaseHours: parseFloat(document.getElementById('monthly-base-hours').value) || DEFAULT_RATES.monthlyBaseHours,
+                    productionCostRate: parseFloat(document.getElementById('production-cost-rate').value) || DEFAULT_RATES.productionCostRate,
+                    designCostRate: parseFloat(document.getElementById('design-cost-rate').value) || DEFAULT_RATES.designCostRate,
+                    testLaborRate: parseFloat(document.getElementById('test-labor-rate').value) || DEFAULT_RATES.testLaborRate,
+                    auxiliaryCostBase: parseFloat(document.getElementById('auxiliary-cost-base').value) || DEFAULT_RATES.auxiliaryCostBase,
+                    productionManufacturingRate: parseFloat(document.getElementById('production-manufacturing-rate').value) || DEFAULT_RATES.productionManufacturingRate,
+                    designManufacturingRate: parseFloat(document.getElementById('design-manufacturing-rate').value) || DEFAULT_RATES.designManufacturingRate,
+                    testManufacturingRate: parseFloat(document.getElementById('test-manufacturing-rate').value) || DEFAULT_RATES.testManufacturingRate
+                };
+                
+                // 保存到本地存储
+                localStorage.setItem('cost_calculator_rates', JSON.stringify(currentRates));
+                
+                // 更新最后更新时间
+                updateLastUpdated();
+                
+                showStatus('配置保存成功！', 'success');
+                
+                // 更新主计算器页面的配置
+                updateMainCalculator();
+                
+            } catch (error) {
+                console.error('保存配置失败:', error);
+                showStatus('保存配置失败: ' + error.message, 'danger');
+            }
+        }
+        
+        // 重置为默认值
+        function resetToDefault() {
+            currentRates = {...DEFAULT_RATES};
+            fillFormWithRates();
+            showStatus('已重置为默认配置', 'info');
+        }
+        
+        // 导出配置
+        function exportConfig() {
+            try {
+                const configData = {
+                    rates: currentRates,
+                    exportDate: new Date().toISOString(),
+                    version: '1.0',
+                    description: '产品成本计算器费率配置'
+                };
+                
+                const dataStr = JSON.stringify(configData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const downloadUrl = URL.createObjectURL(dataBlob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `cost_calculator_rates_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(downloadUrl);
+                
+                showStatus('配置导出成功！', 'success');
+                
+            } catch (error) {
+                console.error('导出配置失败:', error);
+                showStatus('导出配置失败: ' + error.message, 'danger');
+            }
+        }
+        
+        // 导入配置
+        function importConfig(file) {
+            if (!file) return;
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const configData = JSON.parse(e.target.result);
+                    
+                    // 验证配置数据格式
+                    if (!configData.rates || typeof configData.rates !== 'object') {
+                        throw new Error('配置文件格式不正确');
+                    }
+                    
+                    // 合并配置，确保所有必需的字段都存在
+                    currentRates = {
+                        ...DEFAULT_RATES,
+                        ...configData.rates
+                    };
+                    
+                    // 填充表单
+                    fillFormWithRates();
+                    
+                    // 保存到本地存储
+                    localStorage.setItem('cost_calculator_rates', JSON.stringify(currentRates));
+                    
+                    // 更新显示
+                    updateLastUpdated();
+                    
+                    showStatus('配置导入成功！', 'success');
+                    
+                    // 更新主计算器页面的配置
+                    updateMainCalculator();
+                    
+                } catch (error) {
+                    console.error('导入配置失败:', error);
+                    showStatus('导入配置失败: ' + error.message, 'danger');
+                }
+            };
+            
+            reader.onerror = function() {
+                showStatus('读取文件失败', 'danger');
+            };
+            
+            reader.readAsText(file);
+            
+            // 清空文件输入，以便可以再次选择同一文件
+            document.getElementById('import-file').value = '';
+        }
+        
+        // 更新主计算器页面的配置
+        function updateMainCalculator() {
+            // 尝试向主计算器页面发送配置更新消息
+            // 注意：由于同源策略，只有在同一域名下才能有效通信
+            try {
+                // 存储一个标志，表示配置已更新
+                localStorage.setItem('cost_calculator_rates_updated', new Date().getTime().toString());
+                
+                // 如果主计算器页面在另一个标签页打开，发送存储事件
+                // 主计算器页面需要监听storage事件
+                showStatus('配置已保存。返回计算器页面时可能需要刷新以应用新配置。', 'info');
+                
+            } catch (error) {
+                console.error('更新主计算器配置失败:', error);
+            }
+        }
+        
+        // 更新最后更新时间显示
+        function updateLastUpdated() {
+            try {
+                const lastUpdated = localStorage.getItem('cost_calculator_rates_updated');
+                if (lastUpdated) {
+                    const date = new Date(parseInt(lastUpdated));
+                    document.getElementById('last-updated').textContent = date.toLocaleString('zh-CN');
+                } else {
+                    document.getElementById('last-updated').textContent = '从未保存';
+                }
+            } catch (error) {
+                console.error('更新最后更新时间失败:', error);
+            }
+        }
+        
+        // 更新存储信息显示
+        function updateStorageInfo() {
+            try {
+                const storageAvailable = typeof localStorage !== 'undefined';
+                if (storageAvailable) {
+                    document.getElementById('storage-info').textContent = '浏览器本地存储';
+                } else {
+                    document.getElementById('storage-info').textContent = '会话存储（关闭页面后丢失）';
+                }
+            } catch (error) {
+                console.error('更新存储信息失败:', error);
+            }
+        }
+        
+        // 显示状态消息
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status-message');
+            
+            // 设置消息和样式
+            statusEl.textContent = message;
+            statusEl.className = 'p-4 rounded-lg fade-in';
+            
+            // 根据类型设置样式
+            switch(type) {
+                case 'success':
+                    statusEl.classList.add('bg-green-50', 'text-green-800', 'border', 'border-green-200');
+                    break;
+                case 'danger':
+                    statusEl.classList.add('bg-red-50', 'text-red-800', 'border', 'border-red-200');
+                    break;
+                case 'warning':
+                    statusEl.classList.add('bg-yellow-50', 'text-yellow-800', 'border', 'border-yellow-200');
+                    break;
+                case 'info':
+                    statusEl.classList.add('bg-blue-50', 'text-blue-800', 'border', 'border-blue-200');
+                    break;
+                default:
+                    statusEl.classList.add('bg-gray-50', 'text-gray-800', 'border', 'border-gray-200');
+            }
+            
+            // 显示消息
+            statusEl.classList.remove('hidden');
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                statusEl.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
