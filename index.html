@@ -189,6 +189,11 @@
                         <div class="text-right">
                             <p class="text-sm text-gray-300">已登录: <span id="logged-user" class="font-medium">admin</span></p>
                         </div>
+                        <a href="config.html" 
+                           class="bg-warning hover:bg-warning/90 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                            <i class="fa fa-cog"></i>
+                            <span>费率配置</span>
+                        </a>
                         <button 
                             id="logout-btn"
                             class="bg-secondary/20 hover:bg-secondary/30 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
@@ -279,7 +284,7 @@
                             <div class="form-group">
                                 <label class="text-gray-600 text-sm font-medium">合计耗费试验工时：</label>
                                 <span id="solar-test-hours" class="calculated-value text-secondary font-semibold block mt-1">12</span>
-                                <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：人数 × 天数 × 12（每日12小时）</div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：人数 × 天数 × 试验每日工时</div>
                             </div>
                         </div>
                     </div>
@@ -293,13 +298,13 @@
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">耗费机器工时：</label>
                             <span id="solar-machine-hours" class="calculated-value text-secondary font-semibold block mt-1">12</span>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：试验部天数 × 12（每日12小时）</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：试验部天数 × 试验每日工时</div>
                         </div>
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">全月可生产数量：</label>
                             <span id="solar-monthly-production" class="calculated-value text-secondary font-semibold block mt-1">348.0000000000</span>
                             <span class="text-gray-500 text-xs">件/月</span>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：2784 / 生产部工时</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：每月基准工时 / 生产部工时</div>
                         </div>
                     </div>
                 </div>
@@ -386,22 +391,22 @@
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">1. 产品生产成本：</label>
                             <div class="amount-container mt-1"><span id="solar-production-cost" class="calculated-value text-labor font-semibold">369.84</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：生产部门工时 × 46.24</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：生产部门工时 × 生产成本费率</div>
                         </div>
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">2. 产品设计成本：</label>
                             <div class="amount-container mt-1"><span id="solar-design-cost" class="calculated-value text-labor font-semibold">746.80</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：设计总工时 × 93.35</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：设计总工时 × 设计成本费率</div>
                         </div>
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">3. 试验人力成本：</label>
                             <div class="amount-container mt-1"><span id="solar-test-labor-cost" class="calculated-value text-test font-semibold">495.84</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：试验工时 × 41.32</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：试验工时 × 试验人力费率</div>
                         </div>
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">4. 辅助人员成本：</label>
                             <div class="amount-container mt-1"><span id="solar-auxiliary-cost" class="calculated-value text-auxiliary font-semibold">240.846</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：83818.52412 / 全月可生产数量</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：辅助人员成本基数 / 全月可生产数量</div>
                         </div>
                     </div>
                 </div>
@@ -416,17 +421,17 @@
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">1. 生产制造费分摊：</label>
                             <div class="amount-container mt-1"><span id="solar-manufacturing-expense" class="calculated-value text-expense font-semibold">857.84</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：生产总工时 × 107.23</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：生产总工时 × 生产制造费率</div>
                         </div>
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">2. 设计相关分摊制造费：</label>
                             <div class="amount-container mt-1"><span id="solar-design-expense" class="calculated-value text-expense font-semibold">782.24</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：设计总工时 × 97.78</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：设计总工时 × 设计制造费率</div>
                         </div>
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">3. 试验制造分摊：</label>
                             <div class="amount-container mt-1"><span id="solar-test-expense" class="calculated-value text-test font-semibold">1288.20</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：耗费机器工时 × 107.35</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：耗费机器工时 × 试验制造费率</div>
                         </div>
                     </div>
                 </div>
@@ -816,7 +821,7 @@
                             <div class="form-group">
                                 <label class="text-gray-600 text-sm font-medium">合计耗费试验工时：</label>
                                 <span id="battery-test-hours" class="calculated-value text-secondary font-semibold block mt-1">12</span>
-                                <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：人数 × 天数 × 12（每日12小时）</div>
+                                <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：人数 × 天数 × 试验每日工时</div>
                             </div>
                         </div>
                     </div>
@@ -830,13 +835,13 @@
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">耗费机器工时：</label>
                             <span id="battery-machine-hours" class="calculated-value text-secondary font-semibold block mt-1">12</span>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：试验部天数 × 12（每日12小时）</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：试验部天数 × 试验每日工时</div>
                         </div>
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">全月可生产数量：</label>
                             <span id="battery-monthly-production" class="calculated-value text-secondary font-semibold block mt-1">348.0000000000</span>
                             <span class="text-gray-500 text-xs">件/月</span>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：2784 / 生产部工时</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：每月基准工时 / 生产部工时</div>
                         </div>
                     </div>
                 </div>
@@ -925,22 +930,22 @@
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">1. 产品生产成本：</label>
                             <div class="amount-container mt-1"><span id="battery-production-cost" class="calculated-value text-labor font-semibold">369.84</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：生产部门工时 × 46.24</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：生产部门工时 × 生产成本费率</div>
                         </div>
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">2. 产品设计成本：</label>
                             <div class="amount-container mt-1"><span id="battery-design-cost" class="calculated-value text-labor font-semibold">746.80</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：设计总工时 × 93.35</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：设计总工时 × 设计成本费率</div>
                         </div>
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">3. 试验人力成本：</label>
                             <div class="amount-container mt-1"><span id="battery-test-labor-cost" class="calculated-value text-test font-semibold">495.84</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：试验工时 × 41.32</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：试验工时 × 试验人力费率</div>
                         </div>
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">4. 辅助人员成本：</label>
                             <div class="amount-container mt-1"><span id="battery-auxiliary-cost" class="calculated-value text-auxiliary font-semibold">240.846</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：83818.52412 / 全月可生产数量</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：辅助人员成本基数 / 全月可生产数量</div>
                         </div>
                     </div>
                 </div>
@@ -955,17 +960,17 @@
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">1. 生产制造费分摊：</label>
                             <div class="amount-container mt-1"><span id="battery-manufacturing-expense" class="calculated-value text-expense font-semibold">857.84</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：生产总工时 × 107.23</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：生产总工时 × 生产制造费率</div>
                         </div>
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">2. 设计相关分摊制造费：</label>
                             <div class="amount-container mt-1"><span id="battery-design-expense" class="calculated-value text-expense font-semibold">782.24</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：设计总工时 × 97.78</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：设计总工时 × 设计制造费率</div>
                         </div>
                         <div class="form-group">
                             <label class="text-gray-600 text-sm font-medium">3. 试验制造分摊：</label>
                             <div class="amount-container mt-1"><span id="battery-test-expense" class="calculated-value text-test font-semibold">1288.20</span><span>元</span></div>
-                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：耗费机器工时 × 107.35</div>
+                            <div class="formula-hint text-gray-500 text-xs italic mt-1">公式：耗费机器工时 × 试验制造费率</div>
                         </div>
                     </div>
                 </div>
@@ -1294,6 +1299,60 @@
     </div>
 
     <script>
+        // 费率配置管理
+        function getRateConfig() {
+            try {
+                // 尝试从本地存储加载配置
+                const savedRates = localStorage.getItem('cost_calculator_rates');
+                
+                if (savedRates) {
+                    const parsedRates = JSON.parse(savedRates);
+                    
+                    // 确保所有必需的费率都存在
+                    return {
+                        dailyTestHours: parsedRates.dailyTestHours || 12,
+                        monthlyBaseHours: parsedRates.monthlyBaseHours || 2784,
+                        productionCostRate: parsedRates.productionCostRate || 46.24,
+                        designCostRate: parsedRates.designCostRate || 93.35,
+                        testLaborRate: parsedRates.testLaborRate || 41.32,
+                        auxiliaryCostBase: parsedRates.auxiliaryCostBase || 83818.52412,
+                        productionManufacturingRate: parsedRates.productionManufacturingRate || 107.23,
+                        designManufacturingRate: parsedRates.designManufacturingRate || 97.78,
+                        testManufacturingRate: parsedRates.testManufacturingRate || 107.35
+                    };
+                }
+            } catch (error) {
+                console.error('加载费率配置失败:', error);
+            }
+            
+            // 返回默认配置
+            return {
+                dailyTestHours: 12,
+                monthlyBaseHours: 2784,
+                productionCostRate: 46.24,
+                designCostRate: 93.35,
+                testLaborRate: 41.32,
+                auxiliaryCostBase: 83818.52412,
+                productionManufacturingRate: 107.23,
+                designManufacturingRate: 97.78,
+                testManufacturingRate: 107.35
+            };
+        }
+        
+        // 监听配置更新事件
+        if (typeof window !== 'undefined') {
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'cost_calculator_rates_updated') {
+                    // 配置已更新，可以重新加载计算
+                    console.log('费率配置已更新，重新计算...');
+                    
+                    // 如果是当前产品类型，重新计算
+                    const activeProduct = document.querySelector('input[name="product"]:checked').value;
+                    calculateAllCosts(activeProduct);
+                }
+            });
+        }
+        
         // 登录功能
         document.addEventListener('DOMContentLoaded', function() {
             // 动态加载用户凭证（从config.js）
@@ -1393,13 +1452,7 @@
             function updateLoginHint() {
                 const users = userCredentials.getAllUsers ? userCredentials.getAllUsers() : userCredentials.users;
                 const hintDiv = document.getElementById('login-hint');
-                
-                if (users.length > 0 && hintDiv) {
-                    hintDiv.innerHTML = '';
-                    users.forEach(user => {
-                        hintDiv.innerHTML += `<p>账号: <span class="font-medium">${user.username}</span> / 密码: <span class="font-medium">${user.password}</span></p>`;
-                    });
-                }
+               
             }
             
             // 更新登录提示
@@ -1646,9 +1699,11 @@
             // 太阳电池阵部门参数
             const solarInputs = document.querySelectorAll('#solar-panel input[id^="solar-"]');
             solarInputs.forEach(input => {
-                input.addEventListener('input', function() {
-                    updateDepartmentCalculations('solar');
-                });
+                if (input.id.includes('tech-') || input.id.includes('prod-') || input.id.includes('test-')) {
+                    input.addEventListener('input', function() {
+                        updateDepartmentCalculations('solar');
+                    });
+                }
             });
             
             // 蓄电池组部门参数
@@ -1664,6 +1719,9 @@
         
         // 更新部门计算
         function updateDepartmentCalculations(productType) {
+            // 获取费率配置
+            const rates = getRateConfig();
+            
             // 技术部
             const techPeople = parseInt(document.getElementById(`${productType}-tech-people`).value) || 0;
             const techDays = parseInt(document.getElementById(`${productType}-tech-days`).value) || 0;
@@ -1679,7 +1737,7 @@
             // 试验部
             const testPeople = parseInt(document.getElementById(`${productType}-test-people`).value) || 0;
             const testDays = parseInt(document.getElementById(`${productType}-test-days`).value) || 0;
-            const testHours = testPeople * testDays * 12;
+            const testHours = testPeople * testDays * rates.dailyTestHours; // 使用配置的每日试验工时
             document.getElementById(`${productType}-test-hours`).textContent = testHours;
             
             // 总工时
@@ -1687,32 +1745,32 @@
             document.getElementById(`${productType}-total-hours`).textContent = totalHours;
             
             // 机器工时
-            const machineHours = testDays * 12;
+            const machineHours = testDays * rates.dailyTestHours; // 使用配置的每日试验工时
             document.getElementById(`${productType}-machine-hours`).textContent = machineHours;
             
             // 全月可生产数量
-            const monthlyProduction = prodHours > 0 ? (2784 / prodHours) : 0;
+            const monthlyProduction = prodHours > 0 ? (rates.monthlyBaseHours / prodHours) : 0; // 使用配置的每月基准工时
             const monthlyProductionFormatted = monthlyProduction % 1 === 0 ? 
                 monthlyProduction.toFixed(0) : 
                 monthlyProduction.toFixed(10);
             document.getElementById(`${productType}-monthly-production`).textContent = monthlyProductionFormatted;
             
             // 更新人力成本
-            updateLaborCosts(productType, prodHours, techHours, testHours, monthlyProduction);
+            updateLaborCosts(productType, prodHours, techHours, testHours, monthlyProduction, rates);
             
             // 更新制造费用
-            updateExpenseCosts(productType, prodHours, techHours, machineHours);
+            updateExpenseCosts(productType, prodHours, techHours, machineHours, rates);
             
             // 更新总成本
             calculateTotalCost(productType);
         }
         
         // 更新人力成本
-        function updateLaborCosts(productType, prodHours, techHours, testHours, monthlyProduction) {
-            const productionCost = prodHours * 46.24;
-            const designCost = techHours * 93.35;
-            const testLaborCost = testHours * 41.32;
-            const auxiliaryCost = monthlyProduction > 0 ? (83818.52412 / monthlyProduction) : 0;
+        function updateLaborCosts(productType, prodHours, techHours, testHours, monthlyProduction, rates) {
+            const productionCost = prodHours * rates.productionCostRate;
+            const designCost = techHours * rates.designCostRate;
+            const testLaborCost = testHours * rates.testLaborRate;
+            const auxiliaryCost = monthlyProduction > 0 ? (rates.auxiliaryCostBase / monthlyProduction) : 0;
             
             document.getElementById(`${productType}-production-cost`).textContent = productionCost.toFixed(2);
             document.getElementById(`${productType}-design-cost`).textContent = designCost.toFixed(2);
@@ -1731,10 +1789,10 @@
         }
         
         // 更新制造费用
-        function updateExpenseCosts(productType, prodHours, techHours, machineHours) {
-            const manufacturingExpense = prodHours * 107.23;
-            const designExpense = techHours * 97.78;
-            const testExpense = machineHours * 107.35;
+        function updateExpenseCosts(productType, prodHours, techHours, machineHours, rates) {
+            const manufacturingExpense = prodHours * rates.productionManufacturingRate;
+            const designExpense = techHours * rates.designManufacturingRate;
+            const testExpense = machineHours * rates.testManufacturingRate;
             
             document.getElementById(`${productType}-manufacturing-expense`).textContent = manufacturingExpense.toFixed(2);
             document.getElementById(`${productType}-design-expense`).textContent = designExpense.toFixed(2);
@@ -1850,14 +1908,14 @@
             document.getElementById(`${productType}-total-cost`).textContent = totalCost.toFixed(3);
             
             // 计算税金和报价
-            calculateTaxesAndQuote(productType, totalCost, bomTotal, expenseTotal);
+            calculateTaxesAndQuote(productType, totalCost, bomTotal);
             
             // 更新图表
             updateChart(productType, materialTotal, laborTotal, expenseTotal, outsourcingTotal, projectTotal);
         }
         
         // 计算税金和报价
-        function calculateTaxesAndQuote(productType, totalCost, bomTotal, expenseTotal) {
+        function calculateTaxesAndQuote(productType, totalCost, bomTotal) {
             // 1. 先计算报价金额（含税）
             const quoteAmount = (totalCost * 0.13 * 0.12) + (totalCost * 1.13);
             document.getElementById(`${productType}-quote-amount`).textContent = quoteAmount.toFixed(2);
@@ -2159,6 +2217,10 @@
                 const ws4 = XLSX.utils.json_to_sheet(data.detailedCosts);
                 XLSX.utils.book_append_sheet(wb, ws4, '详细成本');
                 
+                // 5. 费率配置
+                const ws5 = XLSX.utils.json_to_sheet(data.rateConfig);
+                XLSX.utils.book_append_sheet(wb, ws5, '费率配置');
+                
                 // 生成Excel文件
                 const productName = productType === 'solar' ? '太阳电池阵' : '蓄电池组';
                 const fileName = `${productName}_成本计算_${new Date().toISOString().slice(0, 10)}.xlsx`;
@@ -2189,6 +2251,7 @@
         function collectExportData(productType) {
             const productName = productType === 'solar' ? '太阳电池阵' : '蓄电池组';
             const exportDate = new Date().toLocaleString('zh-CN');
+            const rates = getRateConfig();
             
             // 1. 部门参数数据
             const departmentParams = [{
@@ -2293,39 +2356,39 @@
             detailedCosts.push({
                 '成本项目': '产品生产成本',
                 '金额（元）': document.getElementById(`${productType}-production-cost`).textContent,
-                '计算公式': '生产部门工时 × 46.24'
+                '计算公式': `生产部门工时 × ${rates.productionCostRate}（生产成本费率）`
             });
             detailedCosts.push({
                 '成本项目': '产品设计成本',
                 '金额（元）': document.getElementById(`${productType}-design-cost`).textContent,
-                '计算公式': '设计总工时 × 93.35'
+                '计算公式': `设计总工时 × ${rates.designCostRate}（设计成本费率）`
             });
             detailedCosts.push({
                 '成本项目': '试验人力成本',
                 '金额（元）': document.getElementById(`${productType}-test-labor-cost`).textContent,
-                '计算公式': '试验工时 × 41.32'
+                '计算公式': `试验工时 × ${rates.testLaborRate}（试验人力费率）`
             });
             detailedCosts.push({
                 '成本项目': '辅助人员成本',
                 '金额（元）': document.getElementById(`${productType}-auxiliary-cost`).textContent,
-                '计算公式': '83818.52412 / 全月可生产数量'
+                '计算公式': `${rates.auxiliaryCostBase}（辅助人员成本基数） / 全月可生产数量`
             });
             
             // 制造费用明细
             detailedCosts.push({
                 '成本项目': '生产制造费分摊',
                 '金额（元）': document.getElementById(`${productType}-manufacturing-expense`).textContent,
-                '计算公式': '生产总工时 × 107.23'
+                '计算公式': `生产总工时 × ${rates.productionManufacturingRate}（生产制造费率）`
             });
             detailedCosts.push({
                 '成本项目': '设计相关分摊制造费',
                 '金额（元）': document.getElementById(`${productType}-design-expense`).textContent,
-                '计算公式': '设计总工时 × 97.78'
+                '计算公式': `设计总工时 × ${rates.designManufacturingRate}（设计制造费率）`
             });
             detailedCosts.push({
                 '成本项目': '试验制造分摊',
                 '金额（元）': document.getElementById(`${productType}-test-expense`).textContent,
-                '计算公式': '耗费机器工时 × 107.35'
+                '计算公式': `耗费机器工时 × ${rates.testManufacturingRate}（试验制造费率）`
             });
             
             // 外购成本明细
@@ -2356,11 +2419,25 @@
                 '金额（元）': document.getElementById(`${productType}-tax-surcharge`).textContent
             });
             
+            // 5. 费率配置数据
+            const rateConfig = [
+                { '费率项': '试验每日工时（小时）', '数值': rates.dailyTestHours, '用途': '试验部工时计算' },
+                { '费率项': '每月基准工时（小时）', '数值': rates.monthlyBaseHours, '用途': '全月可生产数量计算' },
+                { '费率项': '生产成本费率（元/小时）', '数值': rates.productionCostRate, '用途': '产品生产成本计算' },
+                { '费率项': '设计成本费率（元/小时）', '数值': rates.designCostRate, '用途': '产品设计成本计算' },
+                { '费率项': '试验人力费率（元/小时）', '数值': rates.testLaborRate, '用途': '试验人力成本计算' },
+                { '费率项': '辅助人员成本基数（元/月）', '数值': rates.auxiliaryCostBase, '用途': '辅助人员成本分摊计算' },
+                { '费率项': '生产制造费率（元/小时）', '数值': rates.productionManufacturingRate, '用途': '生产制造费分摊计算' },
+                { '费率项': '设计制造费率（元/小时）', '数值': rates.designManufacturingRate, '用途': '设计相关制造费分摊计算' },
+                { '费率项': '试验制造费率（元/小时）', '数值': rates.testManufacturingRate, '用途': '试验制造分摊计算' }
+            ];
+            
             return {
                 departmentParams,
                 bomData,
                 costSummary,
-                detailedCosts
+                detailedCosts,
+                rateConfig
             };
         }
     </script>
