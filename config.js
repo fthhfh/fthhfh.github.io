@@ -9,8 +9,8 @@ const USER_CREDENTIALS = {
             password: '123456'
         },
         {
-            username: 'user1',
-            password: 'password123'
+            username: '梁金山',
+            password: '123456'
         },
         {
             username: 'manager',
